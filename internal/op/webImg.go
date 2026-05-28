@@ -10,6 +10,11 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 从 Bilibili URL 中提取视频标识。
+ * @param URL 原始链接。
+ * @return string 视频 BV 或 av 标识。
+ */
 func getBiliABV(URL string) string {
 	for i := 31; i < len(URL); i++ {
 		if URL[i] == '/' || URL[i] == '?' {
@@ -19,6 +24,11 @@ func getBiliABV(URL string) string {
 	return URL[31:]
 }
 
+/**
+ * @brief 从 YouTube URL 中提取视频 ID。
+ * @param URL 原始链接。
+ * @return string 视频 ID。
+ */
 func getYtbID(URL string) string {
 	for i := 32; i < len(URL); i++ {
 		if URL[i] == '&' {
@@ -28,6 +38,13 @@ func getYtbID(URL string) string {
 	return URL[32:]
 }
 
+/**
+ * @brief 根据网页地址生成对应的封面图。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @return GenerateResult 生成结果。
+ * @return error 目标站点不支持或处理失败时返回错误。
+ */
 func generateWebImage(task *model.Task, host string) (GenerateResult, error) {
 	var img []byte
 	var err error

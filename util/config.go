@@ -17,6 +17,9 @@ var (
 	IPTmp            = make(map[string]string)
 )
 
+/**
+ * @brief 初始化全局 HTTP 客户端和字体资源。
+ */
 func init() {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -46,6 +49,9 @@ func init() {
 	}
 }
 
+/**
+ * @brief IP 地理位置接口响应结构。
+ */
 type RegionResp struct {
 	Data struct {
 		Country  string `json:"country"`
@@ -54,6 +60,7 @@ type RegionResp struct {
 	} `json:"data"`
 }
 
+/** @brief 业务类型到中文描述的映射表。 */
 var TypeMap = map[string]string{
 	"download": "文件下载",
 	"txt.gen":  "文字生成",
@@ -62,15 +69,25 @@ var TypeMap = map[string]string{
 	"web.img":  "网页缩略图",
 }
 
+/**
+ * @brief 文本对话消息结构。
+ */
 type TxtMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
+
+/**
+ * @brief 文本生成请求载荷。
+ */
 type TxtPayload struct {
 	Model    string       `json:"model"`
 	Messages []TxtMessage `json:"messages"`
 }
 
+/**
+ * @brief 文本生成接口响应结构。
+ */
 type TxtResp struct {
 	Choices []struct {
 		Message struct {
@@ -80,18 +97,25 @@ type TxtResp struct {
 	} `json:"choices"`
 }
 
+/** @brief 阿里云文生图输入结构。 */
 type AlibabaImgInput struct {
 	Prompt string `json:"prompt"`
 }
+
+/** @brief 阿里云文生图参数结构。 */
 type AlibabaImgParameters struct {
 	Size string `json:"size"`
 	N    int    `json:"n"`
 }
+
+/** @brief 阿里云文生图请求载荷。 */
 type AlibabaImgPayload struct {
 	Model      string               `json:"model"`
 	Input      AlibabaImgInput      `json:"input"`
 	Parameters AlibabaImgParameters `json:"parameters"`
 }
+
+/** @brief 阿里云文生图响应结构。 */
 type AlibabaImgResp struct {
 	Output struct {
 		TaskStatus string `json:"task_status"`
@@ -104,6 +128,7 @@ type AlibabaImgResp struct {
 	} `json:"output"`
 }
 
+/** @brief OpenAI 图像生成请求载荷。 */
 type OpenaiImgPayload struct {
 	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
@@ -111,12 +136,14 @@ type OpenaiImgPayload struct {
 	N      int    `json:"n"`
 }
 
+/** @brief OpenAI 图像生成响应结构。 */
 type OpenaiImgResp struct {
 	Data []struct {
 		URL string `json:"url"`
 	} `json:"data"`
 }
 
+/** @brief Bilibili 视频接口响应结构。 */
 type BiliResp struct {
 	Data struct {
 		Owner struct {
@@ -134,6 +161,7 @@ type BiliResp struct {
 	} `json:"data"`
 }
 
+/** @brief YouTube 视频接口响应结构。 */
 type YtbResp struct {
 	Items []struct {
 		Snippet struct {
@@ -153,6 +181,7 @@ type YtbResp struct {
 	} `json:"items"`
 }
 
+/** @brief 代码仓库信息接口响应结构。 */
 type RepoResp struct {
 	Owner struct {
 		Login string `json:"login"`
@@ -163,6 +192,7 @@ type RepoResp struct {
 	StargazersCount float64 `json:"stargazers_count"`
 }
 
+/** @brief 仓库内容列表接口响应结构。 */
 type RepoContentResp struct {
 	DownloadURL string `json:"download_url"`
 }

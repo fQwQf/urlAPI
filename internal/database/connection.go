@@ -11,7 +11,10 @@ import (
 	"os"
 )
 
-// 包括所有数据的初始化
+/**
+ * @brief 初始化数据库连接及内存缓存。
+ * @return error 初始化任一步骤失败时返回错误。
+ */
 func Init() error {
 	figlet := figure.NewFigure("urlAPI", "", true)
 	figlet.Print()
@@ -31,6 +34,9 @@ func Init() error {
 	return nil
 }
 
+/**
+ * @brief 执行数据库表结构迁移。
+ */
 func migration() {
 	localDB.db.AutoMigrate(&AppSetting{})
 	localDB.db.AutoMigrate(&Provider{})
@@ -42,6 +48,10 @@ func migration() {
 	localDB.db.AutoMigrate(&Repo{})
 }
 
+/**
+ * @brief 建立 SQLite 数据库连接。
+ * @return error 连接失败时返回错误。
+ */
 func connect() error {
 	var err error
 	os.Mkdir("assets", 0777)
@@ -56,12 +66,19 @@ func connect() error {
 	return nil
 }
 
+/**
+ * @brief 关闭数据库连接。
+ */
 func Disconnect() {
 	sqlDB, _ := localDB.db.DB()
 	defer sqlDB.Close()
 	log.Println("Disconnected from database")
 }
 
+/**
+ * @brief 从数据库初始化仓库缓存映射。
+ * @return error 读取或反序列化失败时返回错误。
+ */
 func initRepoMap() error {
 	var repos []Repo
 	if err := localDB.db.Find(&repos).Error; err != nil {
@@ -78,6 +95,10 @@ func initRepoMap() error {
 	return nil
 }
 
+/**
+ * @brief 从数据库初始化会话缓存映射。
+ * @return error 读取失败时返回错误。
+ */
 func initSessionMap() error {
 	var sessions []Session
 	if err := localDB.db.Find(&sessions).Error; err != nil {
@@ -90,6 +111,9 @@ func initSessionMap() error {
 	return nil
 }
 
+/**
+ * @brief 清空任务表并重新创建结构。
+ */
 func ClearTask() {
 	if localDB.db.Migrator().HasTable(&Task{}) {
 		if err := localDB.db.Migrator().DropTable(&Task{}); err != nil {
@@ -101,6 +125,9 @@ func ClearTask() {
 	}
 }
 
+/**
+ * @brief 清空会话表并重置内存会话缓存。
+ */
 func ClearSession() {
 	if localDB.db.Migrator().HasTable(&Session{}) {
 		if err := localDB.db.Migrator().DropTable(&Session{}); err != nil {

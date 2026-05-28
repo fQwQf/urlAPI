@@ -11,6 +11,10 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 处理随机图片请求。
+ * @param c Gin 请求上下文。
+ */
 func RandHandler(c *gin.Context) {
 	target := c.Query("user") + "/" + c.Query("repo")
 	referer := c.Request.Referer()

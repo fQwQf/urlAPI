@@ -13,6 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+/**
+ * @brief 创建并配置 HTTP 路由引擎。
+ * @return *gin.Engine 已注册路由、中间件和静态资源的 Gin 引擎。
+ */
 func NewRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	config := cors.DefaultConfig()
@@ -38,6 +42,11 @@ func NewRouter() *gin.Engine {
 	return r
 }
 
+/**
+ * @brief 启动 HTTP 服务。
+ * @param port 监听端口。
+ * @return error 服务启动失败时返回错误。
+ */
 func Run(port string) error {
 	log.Printf("The server will be running on port %s", port)
 	return NewRouter().Run(":" + port)

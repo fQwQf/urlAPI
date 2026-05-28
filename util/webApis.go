@@ -13,8 +13,12 @@ import (
 	"urlAPI/file"
 )
 
-// 返回给你一个二进制文件
-
+/**
+ * @brief 生成 Bilibili 视频信息图。
+ * @param ABV 视频 av/BV 标识。
+ * @return []byte PNG 图片字节。
+ * @return error 请求、解析或绘制失败时返回错误。
+ */
 func Bili(ABV string) ([]byte, error) {
 	var url string
 	if ABV[0] == 'a' {
@@ -61,6 +65,13 @@ func Bili(ABV string) ([]byte, error) {
 	return ret, nil
 }
 
+/**
+ * @brief 生成 YouTube 视频信息图。
+ * @param ID 视频 ID。
+ * @param Token YouTube API Token。
+ * @return []byte PNG 图片字节。
+ * @return error 请求、解析或绘制失败时返回错误。
+ */
 func Ytb(ID, Token string) ([]byte, error) {
 	url := "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=" + ID + "&key=" + Token
 	req, err := http.NewRequest("GET", url, nil)
@@ -96,6 +107,12 @@ func Ytb(ID, Token string) ([]byte, error) {
 	return ret, nil
 }
 
+/**
+ * @brief 生成 arXiv 论文信息图。
+ * @param URL 论文页面地址。
+ * @return []byte PNG 图片字节。
+ * @return error 请求、解析或绘制失败时返回错误。
+ */
 func Arxiv(URL string) ([]byte, error) {
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
@@ -128,6 +145,16 @@ func Arxiv(URL string) ([]byte, error) {
 	return ret, nil
 }
 
+/**
+ * @brief 生成 IT 之家文章信息图。
+ * @param URL 文章地址。
+ * @param endpoint 文本总结接口地址。
+ * @param token 鉴权令牌。
+ * @param model 文本模型名称。
+ * @param context 总结上下文提示词。
+ * @return []byte PNG 图片字节。
+ * @return error 请求、总结或绘制失败时返回错误。
+ */
 func ITHome(URL, endpoint, token, model, context string) ([]byte, error) {
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
@@ -160,6 +187,13 @@ func ITHome(URL, endpoint, token, model, context string) ([]byte, error) {
 	return ret, nil
 }
 
+/**
+ * @brief 生成 GitHub 或 Gitee 仓库信息图。
+ * @param URL 仓库地址。
+ * @param Token GitHub API Token。
+ * @return []byte PNG 图片字节。
+ * @return error 请求、解析或绘制失败时返回错误。
+ */
 func Repo(URL string, Token string) ([]byte, error) {
 	var logoURL string
 	switch {
@@ -210,6 +244,11 @@ func Repo(URL string, Token string) ([]byte, error) {
 	return ret, nil
 }
 
+/**
+ * @brief 将 Bilibili 数值格式化为展示文本。
+ * @param x 原始数值。
+ * @return string 格式化后的展示字符串。
+ */
 func biliGetStr(x float64) string {
 	if x >= 10000 {
 		return strconv.FormatFloat(x/10000.0, 'f', 1, 64) + "w"
@@ -218,6 +257,16 @@ func biliGetStr(x float64) string {
 	}
 }
 
+/**
+ * @brief 遍历 arXiv HTML 节点并提取标题、作者和摘要。
+ * @param n 当前 HTML 节点。
+ * @param title 当前提取到的标题。
+ * @param author 当前提取到的作者。
+ * @param description 当前提取到的摘要。
+ * @return string 标题。
+ * @return string 作者。
+ * @return string 摘要。
+ */
 func traverseArxiv(n *html.Node, title, author, description string) (string, string, string) {
 	if n.Type == html.ElementNode {
 		for _, attr := range n.Attr {
@@ -236,6 +285,11 @@ func traverseArxiv(n *html.Node, title, author, description string) (string, str
 	return title, author, description
 }
 
+/**
+ * @brief 提取节点下的纯文本内容。
+ * @param n 当前 HTML 节点。
+ * @return string 提取出的文本。
+ */
 func findItem(n *html.Node) string {
 	var ret string
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -248,6 +302,16 @@ func findItem(n *html.Node) string {
 	return ret
 }
 
+/**
+ * @brief 遍历 IT 之家 HTML 节点并提取标题、时间和正文。
+ * @param n 当前 HTML 节点。
+ * @param title 当前提取到的标题。
+ * @param tim 当前提取到的时间。
+ * @param content 当前提取到的正文。
+ * @return string 标题。
+ * @return string 时间。
+ * @return string 正文。
+ */
 func traverseITHome(n *html.Node, title, tim, content string) (string, string, string) {
 	if n.Type == html.ElementNode {
 		for _, attr := range n.Attr {
@@ -266,6 +330,11 @@ func traverseITHome(n *html.Node, title, tim, content string) (string, string, s
 	return title, tim, content
 }
 
+/**
+ * @brief 将仓库统计数值格式化为简短文本。
+ * @param x 原始数值。
+ * @return string 格式化后的展示字符串。
+ */
 func getRepoCount(x float64) string {
 	if x >= 1000 {
 		return strconv.FormatFloat(x/1000.0, 'f', 1, 64) + "k"

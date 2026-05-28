@@ -2,6 +2,11 @@ package model
 
 import "time"
 
+/**
+ * @brief 仓库缓存记录。
+ *
+ * 用于保存仓库接口、标识信息及解析后的内容列表。
+ */
 type Repo struct {
 	UUID    string `json:"uuid" gorm:"primaryKey"`
 	API     string `json:"api"`
@@ -9,12 +14,20 @@ type Repo struct {
 	Content string `json:"content"`
 }
 
+/**
+ * @brief 后台登录会话记录。
+ */
 type Session struct {
 	Token  string    `json:"token" gorm:"primaryKey"`
 	Expire time.Time `json:"expire"`
 	Term   bool      `json:"term"`
 }
 
+/**
+ * @brief 任务记录模型。
+ *
+ * 保存一次生成或下载请求的来源、参数和处理结果。
+ */
 type Task struct {
 	UUID     string    `json:"uuid" gorm:"primaryKey"`
 	Time     time.Time `json:"time"`
@@ -33,6 +46,9 @@ type Task struct {
 	Size     string    `json:"size"`
 }
 
+/**
+ * @brief 标量应用设置项。
+ */
 type AppSetting struct {
 	Key       string    `json:"key" gorm:"primaryKey"`
 	Value     string    `json:"value"`
@@ -41,6 +57,9 @@ type AppSetting struct {
 	Version   int       `json:"version" gorm:"-"`
 }
 
+/**
+ * @brief AI 服务提供方配置模型。
+ */
 type Provider struct {
 	ID           uint      `json:"id" gorm:"primaryKey"`
 	Name         string    `json:"name" gorm:"unique;not null"`
@@ -54,6 +73,9 @@ type Provider struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+/**
+ * @brief 业务服务配置模型。
+ */
 type ServiceConfig struct {
 	Service          string `json:"service" gorm:"primaryKey"`
 	CacheMinutes     int    `json:"cache_minutes"`
@@ -61,15 +83,25 @@ type ServiceConfig struct {
 	Settings         string `json:"settings" gorm:"type:json"`
 }
 
+/**
+ * @brief 提示词模板配置模型。
+ */
 type Prompt struct {
 	Key      string `json:"key" gorm:"primaryKey"`
 	Template string `json:"template" gorm:"not null"`
 }
 
+/**
+ * @brief 返回提示词表名。
+ * @return string 提示词在数据库中的表名。
+ */
 func (Prompt) TableName() string {
 	return "prompts"
 }
 
+/**
+ * @brief 通用配置列表项模型。
+ */
 type ConfigListItem struct {
 	ID        uint   `json:"id" gorm:"primaryKey"`
 	Scope     string `json:"scope" gorm:"not null;uniqueIndex:idx_config_list_scope_value"`
@@ -77,6 +109,9 @@ type ConfigListItem struct {
 	SortOrder int    `json:"sort_order" gorm:"default:0"`
 }
 
+/**
+ * @brief 数据库批量查询结果集合。
+ */
 type DBList struct {
 	RepoList       []Repo
 	TaskList       []Task

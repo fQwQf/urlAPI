@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+/** @brief 单个提供方设置的接口传输结构。 */
 type providerSettingsDTO struct {
 	APIKeySet    bool   `json:"api_key_set"`
 	APIKey       string `json:"api_key,omitempty"`
@@ -20,6 +21,7 @@ type providerSettingsDTO struct {
 	Endpoint     string `json:"endpoint"`
 }
 
+/** @brief 文本功能设置的接口传输结构。 */
 type textSettingsDTO struct {
 	Enabled            bool     `json:"enabled"`
 	GenerationAPI      string   `json:"generation_api"`
@@ -30,6 +32,7 @@ type textSettingsDTO struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/** @brief 图像功能设置的接口传输结构。 */
 type imageSettingsDTO struct {
 	Enabled            bool     `json:"enabled"`
 	API                string   `json:"api"`
@@ -38,6 +41,7 @@ type imageSettingsDTO struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/** @brief 网页功能设置的接口传输结构。 */
 type webSettingsDTO struct {
 	Enabled          bool     `json:"enabled"`
 	SummaryAPI       string   `json:"summary_api"`
@@ -50,6 +54,7 @@ type webSettingsDTO struct {
 	AllowedHosts     []string `json:"allowed_hosts"`
 }
 
+/** @brief 随机图片功能设置的接口传输结构。 */
 type randomSettingsDTO struct {
 	Enabled           bool   `json:"enabled"`
 	SourceRewriteFrom string `json:"source_rewrite_from"`
@@ -57,31 +62,41 @@ type randomSettingsDTO struct {
 	DefaultAPI        string `json:"default_api"`
 }
 
+/** @brief 后台安全设置的接口传输结构。 */
 type dashboardSecurityDTO struct {
 	PasswordHash        string   `json:"password_hash,omitempty"`
 	DashboardAllowedIPs []string `json:"dashboard_allowed_ips"`
 	AllowedReferers     []string `json:"allowed_referers"`
 }
 
+/** @brief 提示词设置的接口传输结构。 */
 type promptSettingsDTO struct {
 	GenerationContext string            `json:"generation_context"`
 	SummaryContext    string            `json:"summary_context"`
 	Templates         map[string]string `json:"templates"`
 }
 
+/** @brief 任务行为设置的接口传输结构。 */
 type taskBehaviorDTO struct {
 	ExceptDomains []string `json:"except_domains"`
 	ExceptInfos   []string `json:"except_infos"`
 }
 
+/** @brief 文本提示词安全设置传输结构。 */
 type textPromptSecurityDTO struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/** @brief 图像提示词安全设置传输结构。 */
 type imagePromptSecurityDTO struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/**
+ * @brief 读取指定分区的应用设置。
+ * @param info 会话请求与响应对象。
+ * @return error 读取或编码失败时返回错误。
+ */
 func fetchSettings(info *Session) error {
 	body, err := settingsBody(info.SettingPart, database.SettingsStore.Get())
 	if err != nil {
@@ -95,6 +110,11 @@ func fetchSettings(info *Session) error {
 	return nil
 }
 
+/**
+ * @brief 修改指定分区的应用设置。
+ * @param info 会话请求与响应对象。
+ * @return error 反序列化、校验或保存失败时返回错误。
+ */
 func editSettings(info *Session) error {
 	settings := database.SettingsStore.Get()
 	updated, err := applySettingsBody(info.SettingPart, settings, info.SettingBody)
@@ -107,6 +127,13 @@ func editSettings(info *Session) error {
 	return database.SaveAppSettings(updated)
 }
 
+/**
+ * @brief 根据分区名称构造设置响应体。
+ * @param part 设置分区标识。
+ * @param settings 当前完整应用设置。
+ * @return any 对应分区的响应结构。
+ * @return error 分区不存在时返回错误。
+ */
 func settingsBody(part string, settings util.AppSettings) (any, error) {
 	switch part {
 	case "provider.openai", "openai":
@@ -177,6 +204,14 @@ func settingsBody(part string, settings util.AppSettings) (any, error) {
 	}
 }
 
+/**
+ * @brief 将请求体应用到指定分区设置中。
+ * @param part 设置分区标识。
+ * @param settings 当前完整应用设置。
+ * @param body 前端提交的原始 JSON。
+ * @return util.AppSettings 更新后的应用设置。
+ * @return error 反序列化失败或分区不存在时返回错误。
+ */
 func applySettingsBody(part string, settings util.AppSettings, body json.RawMessage) (util.AppSettings, error) {
 	switch part {
 	case "provider.openai", "openai":
@@ -293,6 +328,11 @@ func applySettingsBody(part string, settings util.AppSettings, body json.RawMess
 	return util.NormalizeSettings(settings), nil
 }
 
+/**
+ * @brief 将提供方配置转换为接口 DTO。
+ * @param provider 内部提供方配置。
+ * @return providerSettingsDTO 前端可消费的设置结构。
+ */
 func providerDTO(provider util.ProviderConfig) providerSettingsDTO {
 	return providerSettingsDTO{
 		APIKeySet:    provider.APIKey != "",
@@ -304,6 +344,12 @@ func providerDTO(provider util.ProviderConfig) providerSettingsDTO {
 	}
 }
 
+/**
+ * @brief 将接口 DTO 回写到提供方配置中。
+ * @param provider 原始提供方配置。
+ * @param dto 前端提交的配置结构。
+ * @return util.ProviderConfig 更新后的提供方配置。
+ */
 func applyProviderDTO(provider util.ProviderConfig, dto providerSettingsDTO) util.ProviderConfig {
 	if dto.APIKey != "" {
 		provider.APIKey = dto.APIKey
@@ -316,6 +362,11 @@ func applyProviderDTO(provider util.ProviderConfig, dto providerSettingsDTO) uti
 	return provider
 }
 
+/**
+ * @brief 对完整应用设置做一致性校验。
+ * @param settings 待校验的应用设置。
+ * @return error 校验失败时返回错误。
+ */
 func validateSettings(settings util.AppSettings) error {
 	if err := validateProviderAPI(settings.Text.GenerationAPI, true); err != nil {
 		return err
@@ -345,6 +396,12 @@ func validateSettings(settings util.AppSettings) error {
 	return nil
 }
 
+/**
+ * @brief 校验提供方 API 名称是否合法。
+ * @param api 提供方标识。
+ * @param allowOther 是否允许 `otherapi`。
+ * @return error 非法时返回错误。
+ */
 func validateProviderAPI(api string, allowOther bool) error {
 	switch api {
 	case "openai", "deepseek", "alibaba":
@@ -357,6 +414,11 @@ func validateProviderAPI(api string, allowOther bool) error {
 	return errors.New("invalid provider api")
 }
 
+/**
+ * @brief 校验可选 URL 字段是否合法。
+ * @param rawURL 原始 URL 字符串。
+ * @return error URL 非法时返回错误。
+ */
 func validateOptionalURL(rawURL string) error {
 	if strings.TrimSpace(rawURL) == "" {
 		return nil

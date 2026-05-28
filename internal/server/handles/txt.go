@@ -11,6 +11,10 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 处理文本生成请求。
+ * @param c Gin 请求上下文。
+ */
 func TxtHandler(c *gin.Context) {
 	referer := c.Request.Referer()
 	ip := c.ClientIP()

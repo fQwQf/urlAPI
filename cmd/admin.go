@@ -7,6 +7,11 @@ import (
 	"urlAPI/internal/database"
 )
 
+/**
+ * @brief 执行后台管理命令。
+ * @param args 管理子命令及其参数。
+ * @return error 命令不存在或执行失败时返回错误。
+ */
 func admin(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("missing admin command")
@@ -34,6 +39,9 @@ func admin(args []string) error {
 	return nil
 }
 
+/**
+ * @brief 将后台密码重置为默认值并清空现有会话。
+ */
 func resetPassword() {
 	settings := database.SettingsStore.Get()
 	settings.Security.DashboardPasswordHash = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
@@ -43,6 +51,9 @@ func resetPassword() {
 	database.ClearSession()
 }
 
+/**
+ * @brief 清空后台 IP 白名单限制。
+ */
 func clearIPRestrict() {
 	settings := database.SettingsStore.Get()
 	settings.Security.DashboardAllowedIPs = []string{"*"}

@@ -21,6 +21,10 @@ var webAPIMap = map[string]string{
 	"www.ithome.com":   "ithome",
 }
 
+/**
+ * @brief 处理网页封面图生成请求。
+ * @param c Gin 请求上下文。
+ */
 func WebHandler(c *gin.Context) {
 	target := c.Query("img")
 	parsedURL, _ := url.Parse(target)

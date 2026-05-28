@@ -15,6 +15,11 @@ import (
 const skipDBKey = "security.skipDB"
 const generalKey = "security.general"
 
+/**
+ * @brief 请求安全上下文。
+ *
+ * 统一保存一次请求的来源信息、任务类型以及安全检查结果。
+ */
 type General struct {
 	Referer string    `json:"referer"` //Complete Referer
 	IP      string    `json:"ip"`
@@ -26,6 +31,11 @@ type General struct {
 	Info    string    `json:"info"`
 }
 
+/**
+ * @brief 构造通用安全中间件。
+ * @param kind 请求所属的业务类型。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func GeneralSecurityMiddleware(kind string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		general := General{
@@ -68,6 +78,10 @@ func GeneralSecurityMiddleware(kind string) gin.HandlerFunc {
 	}
 }
 
+/**
+ * @brief 文本生成请求安全校验中间件。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func TextSecurityMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		general, ok := GetGeneral(c)
@@ -107,6 +121,10 @@ func TextSecurityMiddleware() gin.HandlerFunc {
 	}
 }
 
+/**
+ * @brief 图像生成请求安全校验中间件。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func ImageSecurityMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		general, ok := GetGeneral(c)
@@ -136,6 +154,10 @@ func ImageSecurityMiddleware() gin.HandlerFunc {
 	}
 }
 
+/**
+ * @brief 随机图片请求安全校验中间件。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func RandomSecurityMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		general, ok := GetGeneral(c)
@@ -162,6 +184,10 @@ func RandomSecurityMiddleware() gin.HandlerFunc {
 	}
 }
 
+/**
+ * @brief 网页截图请求安全校验中间件。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func WebSecurityMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		general, ok := GetGeneral(c)
@@ -192,12 +218,22 @@ func WebSecurityMiddleware() gin.HandlerFunc {
 	}
 }
 
+/**
+ * @brief 下载请求安全中间件。
+ * @return gin.HandlerFunc Gin 中间件函数。
+ */
 func DownloadSecurityMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 	}
 }
 
+/**
+ * @brief 从上下文中提取通用安全信息。
+ * @param c Gin 请求上下文。
+ * @return General 安全上下文对象。
+ * @return bool 是否成功读取。
+ */
 func GetGeneral(c *gin.Context) (General, bool) {
 	value, exists := c.Get(generalKey)
 	if !exists {
@@ -207,6 +243,11 @@ func GetGeneral(c *gin.Context) (General, bool) {
 	return general, ok
 }
 
+/**
+ * @brief 从上下文中读取是否跳过数据库记录。
+ * @param c Gin 请求上下文。
+ * @return bool 是否跳过数据库写入。
+ */
 func GetSkipDB(c *gin.Context) bool {
 	value, exists := c.Get(skipDBKey)
 	if !exists {
@@ -216,6 +257,11 @@ func GetSkipDB(c *gin.Context) bool {
 	return ok && skipDB
 }
 
+/**
+ * @brief 根据安全检查结果决定是否中止请求。
+ * @param c Gin 请求上下文。
+ * @param general 通用安全信息。
+ */
 func abortIfUnsafe(c *gin.Context, general General) {
 	if general.Unsafe {
 		log.Printf("%s from %s\n", general.Info, c.ClientIP())

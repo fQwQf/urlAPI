@@ -9,6 +9,14 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 执行图像生成并将结果写入本地文件。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @param provider 图像提供方配置。
+ * @return GenerateResult 生成结果。
+ * @return error 调用接口、写文件或序列化结果失败时返回错误。
+ */
 func generateImage(task *model.Task, host string, provider util.ProviderConfig) (GenerateResult, error) {
 	var img []byte
 	prompt := task.Target

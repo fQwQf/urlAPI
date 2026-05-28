@@ -10,6 +10,15 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 执行文本生成并绘制为图片。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @param provider 文本提供方配置。
+ * @param context 系统上下文提示词。
+ * @return GenerateResult 生成结果。
+ * @return error 生成文本、绘图或写文件失败时返回错误。
+ */
 func generateText(task *model.Task, host string, provider util.ProviderConfig, context string) (GenerateResult, error) {
 	endpoint := provider.Endpoint
 	if endpoint == "" {
