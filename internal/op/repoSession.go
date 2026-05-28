@@ -11,6 +11,11 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 新建仓库源配置并抓取内容列表。
+ * @param info 会话请求与响应对象。
+ * @return error 抓取或保存失败时返回错误。
+ */
 func newRepo(info *Session) error {
 	var err error
 	var content []string
@@ -43,6 +48,11 @@ func newRepo(info *Session) error {
 	return errors.WithStack(db.CreateRepo(&repoDB))
 }
 
+/**
+ * @brief 刷新指定仓库源的缓存内容。
+ * @param info 会话请求与响应对象。
+ * @return error 查询、抓取或保存失败时返回错误。
+ */
 func refreshRepo(info *Session) error {
 	repoFinder := model.Repo{
 		UUID: info.RepoUUID,
@@ -79,6 +89,11 @@ func refreshRepo(info *Session) error {
 	return errors.WithStack(db.UpdateRepo(&repoDB))
 }
 
+/**
+ * @brief 删除仓库源配置。
+ * @param info 会话请求与响应对象。
+ * @return error 删除失败时返回错误。
+ */
 func delRepo(info *Session) error {
 	repoDB := model.Repo{
 		UUID: info.RepoUUID,
@@ -86,6 +101,11 @@ func delRepo(info *Session) error {
 	return errors.WithStack(db.DeleteRepo(&repoDB))
 }
 
+/**
+ * @brief 查询全部仓库源配置。
+ * @param info 会话请求与响应对象。
+ * @return error 查询失败时返回错误。
+ */
 func fetchRepo(info *Session) error {
 	repoFinder := model.Repo{}
 	repoDBList, err := db.ReadRepo(repoFinder)

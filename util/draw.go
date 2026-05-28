@@ -15,6 +15,10 @@ import (
 	"urlAPI/file"
 )
 
+/**
+ * @brief 创建带有默认字体配置的绘图上下文。
+ * @return *freetype.Context 绘图上下文对象。
+ */
 func getDrawer() *freetype.Context {
 	drawer := freetype.NewContext()
 	drawer.SetDPI(144)
@@ -23,6 +27,12 @@ func getDrawer() *freetype.Context {
 	return drawer
 }
 
+/**
+ * @brief 将文本内容绘制为图片。
+ * @param oriContent 原始文本内容。
+ * @return []byte PNG 图片字节。
+ * @return error 绘制或编码失败时返回错误。
+ */
 func DrawTxt(oriContent string) ([]byte, error) {
 	Content := DrawTxtArrange(oriContent)
 
@@ -48,6 +58,17 @@ func DrawTxt(oriContent string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+/**
+ * @brief 绘制仓库信息卡片。
+ * @param logo 平台 Logo。
+ * @param Name 仓库名称。
+ * @param Author 作者名称。
+ * @param Description 仓库描述。
+ * @param Star Star 数。
+ * @param Fork Fork 数。
+ * @return []byte PNG 图片字节。
+ * @return error 绘制或编码失败时返回错误。
+ */
 func DrawRepo(logo image.Image, Name, Author, Description, Star, Fork string) ([]byte, error) {
 	starIO, _ := file.Icons.Open("icon/star_icon.png")
 	forkIO, _ := file.Icons.Open("icon/fork_icon.png")
@@ -104,6 +125,19 @@ func DrawRepo(logo image.Image, Name, Author, Description, Star, Fork string) ([
 	return buf.Bytes(), nil
 }
 
+/**
+ * @brief 绘制视频信息卡片。
+ * @param CoverURL 封面图地址。
+ * @param Name 视频标题。
+ * @param Author 作者名称。
+ * @param Description 视频描述。
+ * @param View 播放量。
+ * @param Favorite 收藏数。
+ * @param Like 点赞数。
+ * @param Coin 投币数。
+ * @return []byte PNG 图片字节。
+ * @return error 绘制或编码失败时返回错误。
+ */
 func DrawVideo(CoverURL, Name, Author, Description, View, Favorite, Like, Coin string) ([]byte, error) {
 	req, err := http.NewRequest("GET", CoverURL, nil)
 	if err != nil {
@@ -184,6 +218,17 @@ func DrawVideo(CoverURL, Name, Author, Description, View, Favorite, Like, Coin s
 	return buf.Bytes(), nil
 }
 
+/**
+ * @brief 绘制文章信息卡片。
+ * @param logo 平台 Logo。
+ * @param ID 文章标识。
+ * @param Title 文章标题。
+ * @param Author 作者名称。
+ * @param Description 摘要内容。
+ * @param Time 发布时间。
+ * @return []byte PNG 图片字节。
+ * @return error 绘制或编码失败时返回错误。
+ */
 func DrawArticle(logo image.Image, ID, Title, Author, Description, Time string) ([]byte, error) {
 	titleLen := len(Title) * 25
 	var secondTitle string
@@ -226,6 +271,11 @@ func DrawArticle(logo image.Image, ID, Title, Author, Description, Time string) 
 	return buf.Bytes(), nil
 }
 
+/**
+ * @brief 在指定图像上绘制圆角矩形背景。
+ * @param img 目标 RGBA 图像。
+ * @param option 绘制模式，`fill` 为填充，其余为裁角模式。
+ */
 func DrawRoundedRect(img *image.RGBA, option string) {
 	radius := 45
 	rect := img.Bounds()
@@ -263,6 +313,11 @@ func DrawRoundedRect(img *image.RGBA, option string) {
 	}
 }
 
+/**
+ * @brief 将普通文本按固定宽度分行。
+ * @param Str 原始文本。
+ * @return []string 分行后的文本切片。
+ */
 func DrawTxtArrange(Str string) []string {
 	Content := []rune(Str)
 	var ret []string
@@ -277,6 +332,12 @@ func DrawTxtArrange(Str string) []string {
 	return ret
 }
 
+/**
+ * @brief 按给定宽度估算网页摘要文本的分行结果。
+ * @param Str 原始文本。
+ * @param Width 目标宽度。
+ * @return []string 分行后的文本切片。
+ */
 func DrawWebTxtArrange(Str string, Width int) []string {
 	var maxlen int
 	Content := []rune(Str)

@@ -10,10 +10,13 @@ import (
 
 const AppSettingsVersion = 2
 
+/** @brief 生成上下文提示词的保留键名。 */
 const GenerationContextPromptKey = "generation_context"
 
+/** @brief 总结上下文提示词的保留键名。 */
 const SummaryContextPromptKey = "summary_context"
 
+/** @brief V2 提供方配置行结构。 */
 type V2ProviderRow struct {
 	Name         string
 	APIKeyEnc    string
@@ -25,6 +28,7 @@ type V2ProviderRow struct {
 	Enabled      bool
 }
 
+/** @brief V2 服务配置行结构。 */
 type V2ServiceConfigRow struct {
 	Service          string
 	CacheMinutes     int
@@ -32,22 +36,26 @@ type V2ServiceConfigRow struct {
 	Settings         map[string]string
 }
 
+/** @brief V2 提示词配置行结构。 */
 type V2PromptRow struct {
 	Key      string
 	Template string
 }
 
+/** @brief V2 配置列表项结构。 */
 type V2ConfigListItemRow struct {
 	Scope     string
 	Value     string
 	SortOrder int
 }
 
+/** @brief V2 标量设置项结构。 */
 type V2AppSettingRow struct {
 	Key   string
 	Value string
 }
 
+/** @brief V2 版本全部设置行集合。 */
 type V2SettingsRows struct {
 	Providers       []V2ProviderRow
 	ServiceConfigs  []V2ServiceConfigRow
@@ -56,13 +64,16 @@ type V2SettingsRows struct {
 	AppSettings     []V2AppSettingRow
 }
 
+/** @brief 旧版设置表通用键值行结构。 */
 type NameValueRow struct {
 	Name  string
 	Value string
 }
 
+/** @brief 旧版设置表名。 */
 const SettingsTableName = "settings"
 
+/** @brief 应用内支持的全部提供方设置。 */
 type ProviderSettings struct {
 	OpenAI   ProviderConfig `json:"openai"`
 	DeepSeek ProviderConfig `json:"deepseek"`
@@ -70,6 +81,7 @@ type ProviderSettings struct {
 	OtherAPI ProviderConfig `json:"otherapi"`
 }
 
+/** @brief 单个提供方的连接与模型配置。 */
 type ProviderConfig struct {
 	APIKey       string `json:"api_key"`
 	TextModel    string `json:"text_model"`
@@ -79,6 +91,7 @@ type ProviderConfig struct {
 	Endpoint     string `json:"endpoint"`
 }
 
+/** @brief 功能开关配置。 */
 type FeatureSettings struct {
 	TextEnabled   bool `json:"text_enabled"`
 	ImageEnabled  bool `json:"image_enabled"`
@@ -86,6 +99,7 @@ type FeatureSettings struct {
 	RandomEnabled bool `json:"random_enabled"`
 }
 
+/** @brief 文本功能配置。 */
 type TextSettings struct {
 	GenerationAPI      string   `json:"generation_api"`
 	SummaryAPI         string   `json:"summary_api"`
@@ -95,6 +109,7 @@ type TextSettings struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/** @brief 图像功能配置。 */
 type ImageSettings struct {
 	API                string   `json:"api"`
 	CacheMinutes       int      `json:"cache_minutes"`
@@ -102,6 +117,7 @@ type ImageSettings struct {
 	AcceptedPromptGlob []string `json:"accepted_prompt_glob"`
 }
 
+/** @brief 网页信息图功能配置。 */
 type WebSettings struct {
 	SummaryAPI       string   `json:"summary_api"`
 	CacheMinutes     int      `json:"cache_minutes"`
@@ -111,29 +127,34 @@ type WebSettings struct {
 	AllowedHosts     []string `json:"allowed_hosts"`
 }
 
+/** @brief 随机图片功能配置。 */
 type RandomSettings struct {
 	SourceRewriteFrom string `json:"source_rewrite_from"`
 	FallbackImageURL  string `json:"fallback_image_url"`
 	DefaultAPI        string `json:"default_api"`
 }
 
+/** @brief 后台及请求安全配置。 */
 type SecuritySettings struct {
 	DashboardPasswordHash string   `json:"dashboard_password_hash"`
 	DashboardAllowedIPs   []string `json:"dashboard_allowed_ips"`
 	AllowedReferers       []string `json:"allowed_referers"`
 }
 
+/** @brief 提示词上下文与模板配置。 */
 type PromptSettings struct {
 	GenerationContext string            `json:"generation_context"`
 	SummaryContext    string            `json:"summary_context"`
 	Templates         map[string]string `json:"templates"`
 }
 
+/** @brief 任务记录行为配置。 */
 type TaskSettings struct {
 	ExceptDomains []string `json:"except_domains"`
 	ExceptInfos   []string `json:"except_infos"`
 }
 
+/** @brief 应用完整配置结构。 */
 type AppSettings struct {
 	Version   int              `json:"version"`
 	Providers ProviderSettings `json:"providers"`
@@ -147,6 +168,12 @@ type AppSettings struct {
 	Task      TaskSettings     `json:"task"`
 }
 
+/**
+ * @brief 按名称读取提供方配置。
+ * @param name 提供方名称。
+ * @return ProviderConfig 提供方配置。
+ * @return bool 是否存在该提供方。
+ */
 func (providers ProviderSettings) ByName(name string) (ProviderConfig, bool) {
 	switch name {
 	case "openai":
@@ -162,6 +189,11 @@ func (providers ProviderSettings) ByName(name string) (ProviderConfig, bool) {
 	}
 }
 
+/**
+ * @brief 将旧版键值配置迁移为新版应用设置。
+ * @param legacy 旧版配置映射。
+ * @return AppSettings 迁移后的完整配置。
+ */
 func MigrateLegacySettings(legacy map[string][]string) AppSettings {
 	settings := DefaultAppSettings()
 	legacy = mergeDefaultLegacySettings(legacy)
@@ -249,6 +281,11 @@ func MigrateLegacySettings(legacy map[string][]string) AppSettings {
 	return NormalizeSettings(settings)
 }
 
+/**
+ * @brief 将旧版数据库行转为旧版配置映射。
+ * @param rows 旧版键值行列表。
+ * @return map[string][]string 迁移前的配置映射。
+ */
 func LegacySettingsMap(rows []NameValueRow) map[string][]string {
 	legacy := make(map[string][]string, len(rows))
 	for _, row := range rows {
@@ -261,6 +298,11 @@ func LegacySettingsMap(rows []NameValueRow) map[string][]string {
 	return legacy
 }
 
+/**
+ * @brief 将完整应用设置拆分为 V2 版本的数据库行集合。
+ * @param settings 当前完整应用设置。
+ * @return V2SettingsRows 可持久化的 V2 配置行集合。
+ */
 func BuildV2SettingsRows(settings AppSettings) V2SettingsRows {
 	settings = NormalizeSettings(settings)
 	return V2SettingsRows{
@@ -320,6 +362,12 @@ func BuildV2SettingsRows(settings AppSettings) V2SettingsRows {
 	}
 }
 
+/**
+ * @brief 构造单个提供方的 V2 行结构。
+ * @param name 提供方名称。
+ * @param provider 提供方配置。
+ * @return V2ProviderRow 可持久化的提供方行。
+ */
 func providerRow(name string, provider ProviderConfig) V2ProviderRow {
 	return V2ProviderRow{
 		Name:         name,
@@ -333,6 +381,11 @@ func providerRow(name string, provider ProviderConfig) V2ProviderRow {
 	}
 }
 
+/**
+ * @brief 构造提示词配置的 V2 行列表。
+ * @param prompts 提示词设置。
+ * @return []V2PromptRow 提示词行列表。
+ */
 func buildV2PromptRows(prompts PromptSettings) []V2PromptRow {
 	rows := []V2PromptRow{
 		{Key: GenerationContextPromptKey, Template: prompts.GenerationContext},
@@ -344,6 +397,11 @@ func buildV2PromptRows(prompts PromptSettings) []V2PromptRow {
 	return rows
 }
 
+/**
+ * @brief 构造列表型配置的 V2 行列表。
+ * @param settings 当前完整应用设置。
+ * @return []V2ConfigListItemRow 配置列表项行集合。
+ */
 func buildV2ConfigListItemRows(settings AppSettings) []V2ConfigListItemRow {
 	rows := []V2ConfigListItemRow{}
 	appendListItems := func(scope string, values []string) {
@@ -362,6 +420,12 @@ func buildV2ConfigListItemRows(settings AppSettings) []V2ConfigListItemRow {
 	return rows
 }
 
+/**
+ * @brief 根据 V2 行集合恢复完整应用设置。
+ * @param defaults 默认配置。
+ * @param rows V2 行集合。
+ * @return AppSettings 组装后的应用设置。
+ */
 func AppSettingsFromV2Rows(defaults AppSettings, rows V2SettingsRows) AppSettings {
 	settings := defaults
 	for _, provider := range rows.Providers {
@@ -449,10 +513,17 @@ func AppSettingsFromV2Rows(defaults AppSettings, rows V2SettingsRows) AppSetting
 	return NormalizeSettings(settings)
 }
 
+/** @brief 从旧版键值行中读取旧版配置映射。 */
 func ReadLegacySettings(rows []NameValueRow) map[string][]string {
 	return LegacySettingsMap(rows)
 }
 
+/**
+ * @brief 综合新版与旧版配置行恢复应用设置。
+ * @param v2Rows 新版配置行集合。
+ * @param readRows 读取旧版表行的回调函数。
+ * @return AppSettings 归一化后的应用设置。
+ */
 func BuildAppSettingsFromRows(v2Rows V2SettingsRows, readRows func(table string) []NameValueRow) AppSettings {
 	if HasV2Settings(v2Rows) {
 		return AppSettingsFromV2Rows(DefaultAppSettings(), v2Rows)
@@ -460,10 +531,16 @@ func BuildAppSettingsFromRows(v2Rows V2SettingsRows, readRows func(table string)
 	return MigrateLegacySettings(ReadLegacySettings(readRows(SettingsTableName)))
 }
 
+/**
+ * @brief 判断数据库中是否存在 V2 配置。
+ * @param rows V2 行集合。
+ * @return bool 任一 V2 配置集合非空时返回 true。
+ */
 func HasV2Settings(rows V2SettingsRows) bool {
 	return len(rows.Providers) > 0 || len(rows.ServiceConfigs) > 0
 }
 
+/** @brief 将布尔值编码为字符串。 */
 func boolString(value bool) string {
 	if value {
 		return "true"
@@ -471,6 +548,7 @@ func boolString(value bool) string {
 	return "false"
 }
 
+/** @brief 解析布尔字符串，失败时返回回退值。 */
 func parseBool(value string, fallback bool) bool {
 	switch value {
 	case "true", "1":
@@ -482,6 +560,7 @@ func parseBool(value string, fallback bool) bool {
 	}
 }
 
+/** @brief 解析整数字符串，失败时返回回退值。 */
 func parseInt(value string, fallback int) int {
 	parsed, err := strconv.Atoi(value)
 	if err != nil {
@@ -490,6 +569,10 @@ func parseInt(value string, fallback int) int {
 	return parsed
 }
 
+/**
+ * @brief 返回应用默认设置。
+ * @return AppSettings 默认配置对象。
+ */
 func DefaultAppSettings() AppSettings {
 	f, err := file.Settings.Open("settings.json")
 	if err != nil {
@@ -507,6 +590,11 @@ func DefaultAppSettings() AppSettings {
 	return NormalizeSettings(settings)
 }
 
+/**
+ * @brief 为旧版配置补齐默认键值。
+ * @param legacy 旧版配置映射。
+ * @return map[string][]string 补齐后的配置映射。
+ */
 func mergeDefaultLegacySettings(legacy map[string][]string) map[string][]string {
 	if len(legacy) > 0 {
 		return legacy
@@ -537,6 +625,10 @@ func mergeDefaultLegacySettings(legacy map[string][]string) map[string][]string 
 	return ret
 }
 
+/**
+ * @brief 从内置配置文件读取兜底设置。
+ * @return AppSettings 内置默认配置。
+ */
 func fallbackAppSettings() AppSettings {
 	return NormalizeSettings(AppSettings{
 		Version: AppSettingsVersion,
@@ -602,6 +694,11 @@ func fallbackAppSettings() AppSettings {
 	})
 }
 
+/**
+ * @brief 规范化应用设置，补齐缺省值并整理列表。
+ * @param settings 原始设置。
+ * @return AppSettings 规范化后的设置。
+ */
 func NormalizeSettings(settings AppSettings) AppSettings {
 	settings.Version = AppSettingsVersion
 	settings.Text.EnabledPromptKeys = normalizeList(settings.Text.EnabledPromptKeys)
@@ -618,6 +715,7 @@ func NormalizeSettings(settings AppSettings) AppSettings {
 	return settings
 }
 
+/** @brief 从旧版配置中读取字符串值。 */
 func legacyString(legacy map[string][]string, key string, index int, fallback string) string {
 	values, ok := legacy[key]
 	if !ok || index < 0 || index >= len(values) {
@@ -626,6 +724,7 @@ func legacyString(legacy map[string][]string, key string, index int, fallback st
 	return values[index]
 }
 
+/** @brief 从旧版配置中读取布尔值。 */
 func legacyBool(legacy map[string][]string, key string, index int, fallback bool) bool {
 	switch legacyString(legacy, key, index, "") {
 	case "true":
@@ -637,6 +736,7 @@ func legacyBool(legacy map[string][]string, key string, index int, fallback bool
 	}
 }
 
+/** @brief 从旧版配置中读取整数值。 */
 func legacyInt(legacy map[string][]string, key string, index int, fallback int) int {
 	value, err := strconv.Atoi(legacyString(legacy, key, index, ""))
 	if err != nil {
@@ -645,10 +745,12 @@ func legacyInt(legacy map[string][]string, key string, index int, fallback int) 
 	return value
 }
 
+/** @brief 从旧版配置中读取字符串列表。 */
 func legacyList(legacy map[string][]string, key string) []string {
 	return normalizeList(legacy[key])
 }
 
+/** @brief 对字符串列表去空、去重并保持顺序。 */
 func normalizeList(values []string) []string {
 	ret := make([]string, 0, len(values))
 	seen := make(map[string]bool)

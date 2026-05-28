@@ -8,6 +8,11 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 按条件分页查询任务记录。
+ * @param info 会话请求与响应对象。
+ * @return error 查询失败时返回错误。
+ */
 func fetchTask(info *Session) error {
 	var taskGetter model.Task
 	v := reflect.ValueOf(&taskGetter).Elem()

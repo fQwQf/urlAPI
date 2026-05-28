@@ -8,7 +8,15 @@ import (
 	"strings"
 )
 
-// 通配符检查，兼容 re: 前缀的正则表达式
+/**
+ * @brief 检查字符串是否命中规则列表。
+ *
+ * 支持普通字符串、带 `*` 的通配符，以及 `re:` 前缀的正则表达式。
+ *
+ * @param strs 规则列表。
+ * @param str 待匹配字符串。
+ * @return bool 是否命中任一规则。
+ */
 func WildcardChecker(strs *[]string, str *string) bool {
 	for _, r := range *strs {
 		if strings.HasPrefix(r, "re:") {
@@ -36,7 +44,12 @@ func WildcardChecker(strs *[]string, str *string) bool {
 	return false
 }
 
-// 完全检查
+/**
+ * @brief 检查字符串是否在允许列表中。
+ * @param apis 允许值列表。
+ * @param api 待检查值。
+ * @return bool 为空或命中允许列表时返回 true。
+ */
 func ListChecker(apis *[]string, api *string) bool {
 	if *api == "" {
 		return true
@@ -49,7 +62,11 @@ func ListChecker(apis *[]string, api *string) bool {
 	return false
 }
 
-// 检查png图像是否合法，给路径
+/**
+ * @brief 检查指定路径上的 PNG 文件是否可正常解码。
+ * @param path 文件路径。
+ * @return bool 文件存在且可解析为 PNG 时返回 true。
+ */
 func PngChecker(path string) bool {
 	file, err := os.Open(path)
 	if err != nil {

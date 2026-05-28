@@ -8,6 +8,15 @@ import (
 	"urlAPI/internal/model"
 )
 
+/**
+ * @brief 生成文本类图片结果。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @param skipDB 是否跳过数据库记录。
+ * @return model.Task 更新后的任务对象。
+ * @return GenerateResult 生成结果。
+ * @return error 执行失败时返回错误。
+ */
 func GenerateTextImage(task model.Task, host string, skipDB bool) (model.Task, GenerateResult, error) {
 	settings := database.SettingsStore.Get()
 	if _, ok := database.PromptMap[task.Target]; ok {
@@ -29,6 +38,15 @@ func GenerateTextImage(task model.Task, host string, skipDB bool) (model.Task, G
 	})
 }
 
+/**
+ * @brief 生成图像结果。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @param skipDB 是否跳过数据库记录。
+ * @return model.Task 更新后的任务对象。
+ * @return GenerateResult 生成结果。
+ * @return error 执行失败时返回错误。
+ */
 func GenerateImage(task model.Task, host string, skipDB bool) (model.Task, GenerateResult, error) {
 	settings := database.SettingsStore.Get()
 	if task.API == "" {
@@ -50,6 +68,15 @@ func GenerateImage(task model.Task, host string, skipDB bool) (model.Task, Gener
 	})
 }
 
+/**
+ * @brief 生成网页封面图结果。
+ * @param task 待执行任务。
+ * @param host 当前服务主机地址。
+ * @param skipDB 是否跳过数据库记录。
+ * @return model.Task 更新后的任务对象。
+ * @return GenerateResult 生成结果。
+ * @return error 执行失败时返回错误。
+ */
 func GenerateWebImage(task model.Task, host string, skipDB bool) (model.Task, GenerateResult, error) {
 	settings := database.SettingsStore.Get()
 	parsedURL, err := url.Parse(task.Target)
@@ -63,6 +90,14 @@ func GenerateWebImage(task model.Task, host string, skipDB bool) (model.Task, Ge
 	})
 }
 
+/**
+ * @brief 生成随机图片结果。
+ * @param task 待执行任务。
+ * @param skipDB 是否跳过数据库记录。
+ * @return model.Task 更新后的任务对象。
+ * @return GenerateResult 生成结果。
+ * @return error 执行失败时返回错误。
+ */
 func GenerateRandom(task model.Task, skipDB bool) (model.Task, GenerateResult, error) {
 	settings := database.SettingsStore.Get()
 	if task.API == "" {
@@ -76,16 +111,35 @@ func GenerateRandom(task model.Task, skipDB bool) (model.Task, GenerateResult, e
 	return task, result, nil
 }
 
+/**
+ * @brief 下载指定目标图片。
+ * @param target 目标图片地址。
+ * @return []byte 图片二进制内容。
+ * @return string 失败时使用的回退地址。
+ * @return error 下载失败时返回错误。
+ */
 func DownloadImage(target string) ([]byte, string, error) {
 	return downloadImage(target)
 }
 
+/**
+ * @brief 将任务标记为失败。
+ * @param task 原始任务对象。
+ * @param msg 失败原因。
+ * @return model.Task 更新后的任务对象。
+ */
 func failTask(task model.Task, msg string) model.Task {
 	task.Status = "failed"
 	task.Return = msg
 	return task
 }
 
+/**
+ * @brief 将生成结果写回任务记录。
+ * @param task 待更新的任务对象。
+ * @param result 生成结果。
+ * @return error 结果序列化失败时返回错误。
+ */
 func setTaskResult(task *model.Task, result GenerateResult) error {
 	body, err := json.Marshal(result)
 	if err != nil {

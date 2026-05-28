@@ -8,11 +8,17 @@ import (
 	"urlAPI/internal/model"
 )
 
+/**
+ * @brief 线程安全的任务缓存队列。
+ */
 type SafeTaskQueue struct {
 	Mu    sync.RWMutex
 	Queue map[TaskQueueFilter]TaskQueueItem
 }
 
+/**
+ * @brief 线程安全的任务计数器。
+ */
 type SafeTaskCounter struct {
 	Mu      sync.RWMutex
 	Counter map[string]int
@@ -29,6 +35,10 @@ var (
 	}
 )
 
+/**
+ * @brief 初始化运行期目录和数据库引用。
+ * @return error 初始化失败时返回错误。
+ */
 func Init() error {
 	db = database.GetLocalDB()
 	if err := os.RemoveAll(ImgPath); err != nil {
@@ -37,6 +47,11 @@ func Init() error {
 	return os.MkdirAll(ImgPath, 0777)
 }
 
+/**
+ * @brief 根据提供方名称读取其接口端点。
+ * @param api 提供方标识。
+ * @return string 目标端点地址，不存在时返回空字符串。
+ */
 func getEndpoint(api string) string {
 	provider, ok := database.SettingsStore.Get().Providers.ByName(api)
 	if !ok {
@@ -45,6 +60,11 @@ func getEndpoint(api string) string {
 	return provider.Endpoint
 }
 
+/**
+ * @brief 会话接口的数据传输对象。
+ *
+ * 同时承载前后端交互中用于读取和修改配置、任务及仓库的字段。
+ */
 type Session struct {
 	// backend -> frontend
 	SessionToken string          `json:"session_token"`
@@ -71,6 +91,9 @@ type Session struct {
 	SettingPart string `json:"setting_part"`
 }
 
+/**
+ * @brief 生成类接口的统一返回结构。
+ */
 type GenerateResult struct {
 	Prompt         string `json:"prompt"`
 	OriginalPrompt string `json:"original_prompt"`
@@ -79,12 +102,18 @@ type GenerateResult struct {
 	URL            string `json:"url"`
 }
 
+/**
+ * @brief 缓存中的任务执行状态。
+ */
 type TaskQueueItem struct {
 	DB      model.Task `json:"db"`
 	Return  GenerateResult
 	Running bool `json:"running"`
 }
 
+/**
+ * @brief 任务缓存去重键。
+ */
 type TaskQueueFilter struct {
 	Type   string `json:"type"`
 	Size   string `json:"size"`

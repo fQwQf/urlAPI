@@ -5,8 +5,14 @@ import (
 	"os"
 )
 
+/** @brief 服务默认监听端口。 */
 var Port = "2233"
 
+/**
+ * @brief 执行命令行入口。
+ *
+ * 负责读取进程参数并在失败时输出错误后退出。
+ */
 func Execute() {
 	if err := Run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -14,6 +20,11 @@ func Execute() {
 	}
 }
 
+/**
+ * @brief 解析并执行命令行参数。
+ * @param args 命令行参数列表，不包含程序名。
+ * @return error 当参数非法或执行失败时返回错误。
+ */
 func Run(args []string) error {
 	for index := 0; index < len(args); index++ {
 		switch args[index] {

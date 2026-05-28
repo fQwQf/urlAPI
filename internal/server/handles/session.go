@@ -10,6 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+/**
+ * @brief 处理后台会话与配置管理请求。
+ * @param c Gin 请求上下文。
+ */
 func SessionHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	var request op.Session

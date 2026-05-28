@@ -8,6 +8,16 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief 执行带缓存和去重逻辑的任务。
+ * @param task 待执行任务。
+ * @param filter 缓存过滤键。
+ * @param skipDB 是否跳过数据库记录。
+ * @param process 真正的任务处理函数。
+ * @return model.Task 更新后的任务对象。
+ * @return GenerateResult 任务结果。
+ * @return error 执行失败时返回错误。
+ */
 func ExecuteCachedTask(task model.Task, filter TaskQueueFilter, skipDB bool, process func(*model.Task) (GenerateResult, error)) (model.Task, GenerateResult, error) {
 	preparedTask, returnURL, cached := prepareTask(task, filter)
 	if cached {
@@ -22,12 +32,25 @@ func ExecuteCachedTask(task model.Task, filter TaskQueueFilter, skipDB bool, pro
 	return preparedTask, returnURL, err
 }
 
+/**
+ * @brief 持久化保存任务。
+ * @param task 待保存任务。
+ * @param skipDB 是否跳过数据库写入。
+ */
 func SaveTask(task model.Task, skipDB bool) {
 	if !skipDB {
 		util.ErrorPrinter(db.CreateTask(&task))
 	}
 }
 
+/**
+ * @brief 预处理任务并检查缓存命中状态。
+ * @param task 原始任务。
+ * @param filter 缓存过滤键。
+ * @return model.Task 初始化后的任务对象。
+ * @return GenerateResult 命中缓存时的结果。
+ * @return bool 是否已经命中缓存并可直接返回。
+ */
 func prepareTask(task model.Task, filter TaskQueueFilter) (model.Task, GenerateResult, bool) {
 	settings := database.SettingsStore.Get()
 	expiredTime := settings.Text.CacheMinutes
@@ -87,6 +110,13 @@ func prepareTask(task model.Task, filter TaskQueueFilter) (model.Task, GenerateR
 	return task, GenerateResult{}, false
 }
 
+/**
+ * @brief 在任务执行结束后更新缓存和数据库状态。
+ * @param task 待完成的任务对象。
+ * @param filter 缓存过滤键。
+ * @param result 任务结果。
+ * @param skipDB 是否跳过数据库写入。
+ */
 func finishTask(task *model.Task, filter TaskQueueFilter, result *GenerateResult, skipDB bool) {
 	TaskCounter.Mu.Lock()
 	TaskCounter.Counter[filter.API]--

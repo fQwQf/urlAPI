@@ -5,6 +5,10 @@ import (
 	"urlAPI/internal/server"
 )
 
+/**
+ * @brief 启动 HTTP 服务。
+ * @return error 初始化依赖或启动服务失败时返回错误。
+ */
 func start() error {
 	if err := bootstrap.Init(); err != nil {
 		return err

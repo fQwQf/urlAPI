@@ -5,6 +5,13 @@ import (
 	"urlAPI/internal/model"
 )
 
+/**
+ * @brief 统一处理后台会话相关操作。
+ * @param request 前端提交的会话请求。
+ * @param authSession 当前鉴权会话。
+ * @return Session 处理后的响应对象。
+ * @return error 鉴权或具体操作失败时返回错误。
+ */
 func HandleSession(request Session, authSession model.Session) (Session, error) {
 	response := request
 	if err := login(&response, &authSession); err != nil {

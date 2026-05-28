@@ -8,16 +8,25 @@ import (
 	"urlAPI/util"
 )
 
+/**
+ * @brief IP 频率限制过滤键。
+ */
 type FrequencyFilter struct {
 	Type string `json:"type"`
 	IP   string `json:"ip"`
 }
 
+/**
+ * @brief 单个来源在时间窗口内的访问计数。
+ */
 type FrequencyData struct {
 	Counter int       `json:"counter"`
 	Time    time.Time `json:"time"`
 }
 
+/**
+ * @brief 线程安全的 IP 访问频率缓存。
+ */
 type SafeIPFrequency struct {
 	mu          sync.Mutex
 	IPFrequency map[FrequencyFilter]FrequencyData
@@ -27,12 +36,20 @@ var IPFrequency = SafeIPFrequency{
 	IPFrequency: make(map[FrequencyFilter]FrequencyData),
 }
 
+/**
+ * @brief 执行通用安全检查流程。
+ * @param general 请求安全上下文。
+ */
 func checkGeneralSecurity(general *General) {
 	checkFrequency(general)
 	checkException(general)
 	checkInfo(general)
 }
 
+/**
+ * @brief 检查单个 IP 的访问频率。
+ * @param general 请求安全上下文。
+ */
 func checkFrequency(general *General) {
 	// 上锁，解锁
 	IPFrequency.mu.Lock()
@@ -65,6 +82,10 @@ func checkFrequency(general *General) {
 	return
 }
 
+/**
+ * @brief 校验请求目标和来源域名是否合法。
+ * @param general 请求安全上下文。
+ */
 func checkInfo(general *General) {
 	if general.Target == "" {
 		general.Info = "Empty Target"
@@ -79,6 +100,10 @@ func checkInfo(general *General) {
 	return
 }
 
+/**
+ * @brief 检查当前请求是否命中跳过任务记录的例外规则。
+ * @param general 请求安全上下文。
+ */
 func checkException(general *General) {
 	settings := database.SettingsStore.Get()
 	taskexceptdomain := settings.Task.ExceptDomains

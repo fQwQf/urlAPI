@@ -11,6 +11,16 @@ import (
 	"time"
 )
 
+/**
+ * @brief 调用文本生成接口。
+ * @param endpoint 接口地址。
+ * @param token 鉴权令牌。
+ * @param model 模型名称。
+ * @param context 系统上下文提示词。
+ * @param prompt 用户输入提示词。
+ * @return string 文本生成结果。
+ * @return error 调用失败或响应非法时返回错误。
+ */
 func Txt(endpoint, token, model, context, prompt string) (string, error) {
 	if endpoint == "" || token == "" || model == "" || context == "" || prompt == "" {
 		return "", errors.WithStack(errors.New("Util TxtAPI insufficient info"))
@@ -49,6 +59,16 @@ func Txt(endpoint, token, model, context, prompt string) (string, error) {
 	}
 }
 
+/**
+ * @brief 调用阿里云文生图接口。
+ * @param token 鉴权令牌。
+ * @param prompt 用户提示词。
+ * @param model 模型名称。
+ * @param size 图像尺寸。
+ * @return []byte 生成图像字节。
+ * @return string 实际生效提示词。
+ * @return error 调用失败时返回错误。
+ */
 func AlibabaImg(token, prompt, model, size string) ([]byte, string, error) {
 	imgInput := AlibabaImgInput{
 		Prompt: prompt,
@@ -106,6 +126,12 @@ func AlibabaImg(token, prompt, model, size string) ([]byte, string, error) {
 	return ret, actualPrompt, nil
 }
 
+/**
+ * @brief 查询阿里云异步文生图任务状态。
+ * @param id 任务 ID。
+ * @param token 鉴权令牌。
+ * @return []byte 原始响应字节，失败时返回 nil。
+ */
 func alibabaFetchImgTask(id, token string) []byte {
 	req, _ := http.NewRequest("GET", "https://dashscope.aliyuncs.com/api/v1/tasks/"+id, nil)
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -118,6 +144,16 @@ func alibabaFetchImgTask(id, token string) []byte {
 	return jsonResponse
 }
 
+/**
+ * @brief 调用 OpenAI 图像生成接口。
+ * @param endpoint 接口地址。
+ * @param token 鉴权令牌。
+ * @param prompt 用户提示词。
+ * @param model 模型名称。
+ * @param size 图像尺寸。
+ * @return []byte 生成图像字节。
+ * @return error 调用失败时返回错误。
+ */
 func OpenaiImg(endpoint, token, prompt, model, size string) ([]byte, error) {
 	imgPayload := OpenaiImgPayload{
 		Model:  model,
