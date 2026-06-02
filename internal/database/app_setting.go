@@ -85,14 +85,22 @@ func readV2SettingsRows() (util.V2SettingsRows, error) {
 	}
 	for _, provider := range providers {
 		rows.Providers = append(rows.Providers, util.V2ProviderRow{
-			Name:         provider.Name,
-			APIKeyEnc:    decodeSecret(provider.APIKeyEnc),
-			TextModel:    provider.TextModel,
-			SummaryModel: provider.SummaryModel,
-			ImageModel:   valueString(provider.ImageModel),
-			ImageSize:    valueString(provider.ImageSize),
-			Endpoint:     provider.Endpoint,
-			Enabled:      provider.Enabled,
+			Name:             provider.Name,
+			APIKeyEnc:        decodeSecret(provider.APIKeyEnc),
+			TextModel:        provider.TextModel,
+			SummaryModel:     provider.SummaryModel,
+			ImageModel:       valueString(provider.ImageModel),
+			ImageSize:        valueString(provider.ImageSize),
+			EmbeddingModel:   provider.EmbeddingModel,
+			Endpoint:         provider.Endpoint,
+			APIType:          provider.APIType,
+			Temperature:      provider.Temperature,
+			MaxTokens:        provider.MaxTokens,
+			TopP:             provider.TopP,
+			PresencePenalty:  provider.PresencePenalty,
+			FrequencyPenalty: provider.FrequencyPenalty,
+			CustomHeaders:    provider.CustomHeaders,
+			Enabled:          provider.Enabled,
 		})
 	}
 	var services []ServiceConfig
@@ -158,14 +166,22 @@ func saveProviders(tx *gorm.DB, rows []util.V2ProviderRow) error {
 	}
 	for _, row := range rows {
 		record := Provider{
-			Name:         row.Name,
-			APIKeyEnc:    encodeSecret(row.APIKeyEnc),
-			TextModel:    row.TextModel,
-			SummaryModel: row.SummaryModel,
-			ImageModel:   optionalString(row.ImageModel),
-			ImageSize:    optionalString(row.ImageSize),
-			Endpoint:     row.Endpoint,
-			Enabled:      row.Enabled,
+			Name:             row.Name,
+			APIKeyEnc:        encodeSecret(row.APIKeyEnc),
+			TextModel:        row.TextModel,
+			SummaryModel:     row.SummaryModel,
+			ImageModel:       optionalString(row.ImageModel),
+			ImageSize:        optionalString(row.ImageSize),
+			EmbeddingModel:   row.EmbeddingModel,
+			Endpoint:         row.Endpoint,
+			APIType:          row.APIType,
+			Temperature:      row.Temperature,
+			MaxTokens:        row.MaxTokens,
+			TopP:             row.TopP,
+			PresencePenalty:  row.PresencePenalty,
+			FrequencyPenalty: row.FrequencyPenalty,
+			CustomHeaders:    row.CustomHeaders,
+			Enabled:          row.Enabled,
 		}
 		if err := tx.Create(&record).Error; err != nil {
 			return err

@@ -12,7 +12,7 @@ import (
 )
 
 /**
- * @brief 调用文本生成接口。
+ * @brief 调用文本生成接口（向后兼容，支持额外参数）。
  * @param endpoint 接口地址。
  * @param token 鉴权令牌。
  * @param model 模型名称。
@@ -22,6 +22,24 @@ import (
  * @return error 调用失败或响应非法时返回错误。
  */
 func Txt(endpoint, token, model, context, prompt string) (string, error) {
+	return TxtWithParams(endpoint, token, model, context, prompt, 0, 0, 0, 0)
+}
+
+/**
+ * @brief 调用文本生成接口（支持完整参数）。
+ * @param endpoint 接口地址。
+ * @param token 鉴权令牌。
+ * @param model 模型名称。
+ * @param context 系统上下文提示词。
+ * @param prompt 用户输入提示词。
+ * @param temperature 温度参数。
+ * @param maxTokens 最大token数。
+ * @param topP Top-P参数。
+ * @param presencePenalty 存在惩罚。
+ * @return string 文本生成结果。
+ * @return error 调用失败或响应非法时返回错误。
+ */
+func TxtWithParams(endpoint, token, model, context, prompt string, temperature float64, maxTokens int, topP, presencePenalty float64) (string, error) {
 	if endpoint == "" || token == "" || model == "" || context == "" || prompt == "" {
 		return "", errors.WithStack(errors.New("Util TxtAPI insufficient info"))
 	}
@@ -36,6 +54,18 @@ func Txt(endpoint, token, model, context, prompt string) (string, error) {
 	txtPayload := TxtPayload{
 		Model:    model,
 		Messages: []TxtMessage{developerMessage, userMessage},
+	}
+	if temperature > 0 {
+		txtPayload.Temperature = temperature
+	}
+	if maxTokens > 0 {
+		txtPayload.MaxTokens = maxTokens
+	}
+	if topP > 0 {
+		txtPayload.TopP = topP
+	}
+	if presencePenalty != 0 {
+		txtPayload.PresencePenalty = presencePenalty
 	}
 	jsonPayload, err := json.Marshal(txtPayload)
 	if err != nil {

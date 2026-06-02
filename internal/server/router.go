@@ -38,6 +38,12 @@ func NewRouter() *gin.Engine {
 	r.GET("/web", middleware.GeneralSecurityMiddleware("web"), middleware.WebSecurityMiddleware(), handles.WebHandler)
 	r.GET("/download", middleware.GeneralSecurityMiddleware("download"), middleware.DownloadSecurityMiddleware(), handles.DownloadHandler)
 	r.POST("/session", handles.SessionHandler)
+
+	// OpenAI-compatible API v1
+	r.POST("/v1/chat/completions", handles.ChatCompletionHandler)
+	r.POST("/v1/embeddings", handles.EmbeddingsHandler)
+	r.GET("/v1/models", handles.ModelsHandler)
+
 	r.NoRoute(handles.StaticHandler)
 	return r
 }

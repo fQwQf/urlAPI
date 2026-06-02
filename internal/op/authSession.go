@@ -37,12 +37,9 @@ func login(info *Session, data *model.Session) error {
 		return errors.WithStack(errors.New("Authentication failed"))
 	case time.Now().After(session.Expire):
 		return errors.New("Expired token")
-	case ok && time.Now().Before(session.Expire):
-		return nil
 	default:
-		return errors.WithStack(errors.New("Authentication failed"))
+		return nil
 	}
-	return nil
 }
 
 /**

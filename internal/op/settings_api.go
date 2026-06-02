@@ -12,13 +12,22 @@ import (
 
 /** @brief 单个提供方设置的接口传输结构。 */
 type providerSettingsDTO struct {
-	APIKeySet    bool   `json:"api_key_set"`
-	APIKey       string `json:"api_key,omitempty"`
-	TextModel    string `json:"text_model"`
-	SummaryModel string `json:"summary_model"`
-	ImageModel   string `json:"image_model,omitempty"`
-	ImageSize    string `json:"image_size,omitempty"`
-	Endpoint     string `json:"endpoint"`
+	APIKeySet        bool              `json:"api_key_set"`
+	APIKey           string            `json:"api_key,omitempty"`
+	TextModel        string            `json:"text_model"`
+	SummaryModel     string            `json:"summary_model"`
+	ImageModel       string            `json:"image_model,omitempty"`
+	ImageSize        string            `json:"image_size,omitempty"`
+	EmbeddingModel   string            `json:"embedding_model,omitempty"`
+	Endpoint         string            `json:"endpoint"`
+	APIType          string            `json:"api_type"`
+	Temperature      float64           `json:"temperature"`
+	MaxTokens        int               `json:"max_tokens"`
+	TopP             float64           `json:"top_p"`
+	PresencePenalty  float64           `json:"presence_penalty"`
+	FrequencyPenalty float64           `json:"frequency_penalty"`
+	CustomHeaders    map[string]string `json:"custom_headers,omitempty"`
+	Enabled          bool              `json:"enabled"`
 }
 
 /** @brief 文本功能设置的接口传输结构。 */
@@ -142,6 +151,14 @@ func settingsBody(part string, settings util.AppSettings) (any, error) {
 		return providerDTO(settings.Providers.DeepSeek), nil
 	case "provider.alibaba", "alibaba":
 		return providerDTO(settings.Providers.Alibaba), nil
+	case "provider.anthropic", "anthropic":
+		return providerDTO(settings.Providers.Anthropic), nil
+	case "provider.gemini", "gemini":
+		return providerDTO(settings.Providers.Gemini), nil
+	case "provider.azure", "azure":
+		return providerDTO(settings.Providers.Azure), nil
+	case "provider.moonshot", "moonshot":
+		return providerDTO(settings.Providers.Moonshot), nil
 	case "provider.otherapi", "otherapi":
 		return providerDTO(settings.Providers.OtherAPI), nil
 	case "feature.text", "txt":
@@ -232,6 +249,30 @@ func applySettingsBody(part string, settings util.AppSettings, body json.RawMess
 			return settings, err
 		}
 		settings.Providers.Alibaba = applyProviderDTO(settings.Providers.Alibaba, dto)
+	case "provider.anthropic", "anthropic":
+		var dto providerSettingsDTO
+		if err := json.Unmarshal(body, &dto); err != nil {
+			return settings, err
+		}
+		settings.Providers.Anthropic = applyProviderDTO(settings.Providers.Anthropic, dto)
+	case "provider.gemini", "gemini":
+		var dto providerSettingsDTO
+		if err := json.Unmarshal(body, &dto); err != nil {
+			return settings, err
+		}
+		settings.Providers.Gemini = applyProviderDTO(settings.Providers.Gemini, dto)
+	case "provider.azure", "azure":
+		var dto providerSettingsDTO
+		if err := json.Unmarshal(body, &dto); err != nil {
+			return settings, err
+		}
+		settings.Providers.Azure = applyProviderDTO(settings.Providers.Azure, dto)
+	case "provider.moonshot", "moonshot":
+		var dto providerSettingsDTO
+		if err := json.Unmarshal(body, &dto); err != nil {
+			return settings, err
+		}
+		settings.Providers.Moonshot = applyProviderDTO(settings.Providers.Moonshot, dto)
 	case "provider.otherapi", "otherapi":
 		var dto providerSettingsDTO
 		if err := json.Unmarshal(body, &dto); err != nil {
@@ -335,12 +376,21 @@ func applySettingsBody(part string, settings util.AppSettings, body json.RawMess
  */
 func providerDTO(provider util.ProviderConfig) providerSettingsDTO {
 	return providerSettingsDTO{
-		APIKeySet:    provider.APIKey != "",
-		TextModel:    provider.TextModel,
-		SummaryModel: provider.SummaryModel,
-		ImageModel:   provider.ImageModel,
-		ImageSize:    provider.ImageSize,
-		Endpoint:     provider.Endpoint,
+		APIKeySet:        provider.APIKey != "",
+		TextModel:        provider.TextModel,
+		SummaryModel:     provider.SummaryModel,
+		ImageModel:       provider.ImageModel,
+		ImageSize:        provider.ImageSize,
+		EmbeddingModel:   provider.EmbeddingModel,
+		Endpoint:         provider.Endpoint,
+		APIType:          provider.APIType,
+		Temperature:      provider.Temperature,
+		MaxTokens:        provider.MaxTokens,
+		TopP:             provider.TopP,
+		PresencePenalty:  provider.PresencePenalty,
+		FrequencyPenalty: provider.FrequencyPenalty,
+		CustomHeaders:    provider.CustomHeaders,
+		Enabled:          provider.Enabled,
 	}
 }
 
@@ -358,7 +408,18 @@ func applyProviderDTO(provider util.ProviderConfig, dto providerSettingsDTO) uti
 	provider.SummaryModel = dto.SummaryModel
 	provider.ImageModel = dto.ImageModel
 	provider.ImageSize = dto.ImageSize
+	provider.EmbeddingModel = dto.EmbeddingModel
 	provider.Endpoint = dto.Endpoint
+	provider.APIType = dto.APIType
+	provider.Temperature = dto.Temperature
+	provider.MaxTokens = dto.MaxTokens
+	provider.TopP = dto.TopP
+	provider.PresencePenalty = dto.PresencePenalty
+	provider.FrequencyPenalty = dto.FrequencyPenalty
+	if dto.CustomHeaders != nil {
+		provider.CustomHeaders = dto.CustomHeaders
+	}
+	provider.Enabled = dto.Enabled
 	return provider
 }
 
@@ -388,7 +449,16 @@ func validateSettings(settings util.AppSettings) error {
 			return err
 		}
 	}
-	for _, endpoint := range []string{settings.Providers.OpenAI.Endpoint, settings.Providers.DeepSeek.Endpoint, settings.Providers.Alibaba.Endpoint, settings.Providers.OtherAPI.Endpoint} {
+	for _, endpoint := range []string{
+		settings.Providers.OpenAI.Endpoint,
+		settings.Providers.DeepSeek.Endpoint,
+		settings.Providers.Alibaba.Endpoint,
+		settings.Providers.Anthropic.Endpoint,
+		settings.Providers.Gemini.Endpoint,
+		settings.Providers.Azure.Endpoint,
+		settings.Providers.Moonshot.Endpoint,
+		settings.Providers.OtherAPI.Endpoint,
+	} {
 		if err := validateOptionalURL(endpoint); err != nil {
 			return err
 		}
@@ -404,7 +474,7 @@ func validateSettings(settings util.AppSettings) error {
  */
 func validateProviderAPI(api string, allowOther bool) error {
 	switch api {
-	case "openai", "deepseek", "alibaba":
+	case "openai", "deepseek", "alibaba", "anthropic", "gemini", "azure", "moonshot":
 		return nil
 	case "otherapi":
 		if allowOther {

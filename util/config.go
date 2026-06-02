@@ -81,8 +81,13 @@ type TxtMessage struct {
  * @brief 文本生成请求载荷。
  */
 type TxtPayload struct {
-	Model    string       `json:"model"`
-	Messages []TxtMessage `json:"messages"`
+	Model            string       `json:"model"`
+	Messages         []TxtMessage `json:"messages"`
+	Temperature      float64      `json:"temperature,omitempty"`
+	MaxTokens        int          `json:"max_tokens,omitempty"`
+	TopP             float64      `json:"top_p,omitempty"`
+	PresencePenalty  float64      `json:"presence_penalty,omitempty"`
+	FrequencyPenalty float64      `json:"frequency_penalty,omitempty"`
 }
 
 /**

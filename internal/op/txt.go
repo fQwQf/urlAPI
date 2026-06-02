@@ -2,10 +2,12 @@ package op
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+	"urlAPI/internal/llm"
 	"urlAPI/internal/model"
 	"urlAPI/util"
 )
@@ -19,19 +21,49 @@ import (
  * @return GenerateResult 生成结果。
  * @return error 生成文本、绘图或写文件失败时返回错误。
  */
-func generateText(task *model.Task, host string, provider util.ProviderConfig, context string) (GenerateResult, error) {
-	endpoint := provider.Endpoint
-	if endpoint == "" {
+func generateText(task *model.Task, host string, provider util.ProviderConfig, systemContext string) (GenerateResult, error) {
+	if provider.Endpoint == "" {
 		task.Status = "failed"
 		task.Return = "Unknown API"
 		return GenerateResult{}, errors.New("text generation unknown API")
 	}
-	response, err := util.Txt(endpoint, provider.APIKey, task.Model, context, task.Target)
+
+	client, err := llm.NewProvider(provider)
+	if err != nil {
+		task.Status = "failed"
+		task.Return = err.Error()
+		return GenerateResult{}, fmt.Errorf("text generation client: %w", err)
+	}
+
+	req := llm.ChatCompletionRequest{
+		Model: task.Model,
+		Messages: []llm.ChatMessage{
+			{Role: "system", Content: systemContext},
+			{Role: "user", Content: task.Target},
+		},
+		Temperature:      provider.Temperature,
+		TopP:             provider.TopP,
+		MaxTokens:        provider.MaxTokens,
+		PresencePenalty:  provider.PresencePenalty,
+		FrequencyPenalty: provider.FrequencyPenalty,
+	}
+
+	ctx := context.Background()
+	resp, err := client.ChatCompletion(ctx, req)
 	if err != nil {
 		task.Status = "failed"
 		task.Return = err.Error()
 		return GenerateResult{}, fmt.Errorf("text generation: %w", err)
 	}
+
+	if resp == nil || len(resp.Choices) == 0 {
+		task.Status = "failed"
+		task.Return = "empty response"
+		return GenerateResult{}, errors.New("text generation empty response")
+	}
+
+	response := resp.Choices[0].Message.Content
+
 	img, err := util.DrawTxt(response)
 	if err != nil {
 		task.Status = "failed"

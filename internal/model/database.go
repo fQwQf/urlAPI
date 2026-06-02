@@ -61,16 +61,24 @@ type AppSetting struct {
  * @brief AI 服务提供方配置模型。
  */
 type Provider struct {
-	ID           uint      `json:"id" gorm:"primaryKey"`
-	Name         string    `json:"name" gorm:"unique;not null"`
-	APIKeyEnc    string    `json:"api_key_enc"`
-	TextModel    string    `json:"text_model"`
-	SummaryModel string    `json:"summary_model"`
-	ImageModel   *string   `json:"image_model"`
-	ImageSize    *string   `json:"image_size"`
-	Endpoint     string    `json:"endpoint"`
-	Enabled      bool      `json:"enabled" gorm:"default:1"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID               uint      `json:"id" gorm:"primaryKey"`
+	Name             string    `json:"name" gorm:"unique;not null"`
+	APIKeyEnc        string    `json:"api_key_enc"`
+	TextModel        string    `json:"text_model"`
+	SummaryModel     string    `json:"summary_model"`
+	ImageModel       *string   `json:"image_model"`
+	ImageSize        *string   `json:"image_size"`
+	EmbeddingModel   string    `json:"embedding_model"`
+	Endpoint         string    `json:"endpoint"`
+	APIType          string    `json:"api_type"`
+	Temperature      float64   `json:"temperature" gorm:"default:1"`
+	MaxTokens        int       `json:"max_tokens" gorm:"default:0"`
+	TopP             float64   `json:"top_p" gorm:"default:1"`
+	PresencePenalty  float64   `json:"presence_penalty" gorm:"default:0"`
+	FrequencyPenalty float64   `json:"frequency_penalty" gorm:"default:0"`
+	CustomHeaders    string    `json:"custom_headers" gorm:"type:json"`
+	Enabled          bool      `json:"enabled" gorm:"default:1"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 /**

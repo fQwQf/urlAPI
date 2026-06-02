@@ -18,14 +18,22 @@ const SummaryContextPromptKey = "summary_context"
 
 /** @brief V2 提供方配置行结构。 */
 type V2ProviderRow struct {
-	Name         string
-	APIKeyEnc    string
-	TextModel    string
-	SummaryModel string
-	ImageModel   string
-	ImageSize    string
-	Endpoint     string
-	Enabled      bool
+	Name             string
+	APIKeyEnc        string
+	TextModel        string
+	SummaryModel     string
+	ImageModel       string
+	ImageSize        string
+	EmbeddingModel   string
+	Endpoint         string
+	APIType          string
+	Temperature      float64
+	MaxTokens        int
+	TopP             float64
+	PresencePenalty  float64
+	FrequencyPenalty float64
+	CustomHeaders    string // JSON encoded
+	Enabled          bool
 }
 
 /** @brief V2 服务配置行结构。 */
@@ -75,20 +83,33 @@ const SettingsTableName = "settings"
 
 /** @brief 应用内支持的全部提供方设置。 */
 type ProviderSettings struct {
-	OpenAI   ProviderConfig `json:"openai"`
-	DeepSeek ProviderConfig `json:"deepseek"`
-	Alibaba  ProviderConfig `json:"alibaba"`
-	OtherAPI ProviderConfig `json:"otherapi"`
+	OpenAI    ProviderConfig `json:"openai"`
+	DeepSeek  ProviderConfig `json:"deepseek"`
+	Alibaba   ProviderConfig `json:"alibaba"`
+	Anthropic ProviderConfig `json:"anthropic"`
+	Gemini    ProviderConfig `json:"gemini"`
+	Azure     ProviderConfig `json:"azure"`
+	Moonshot  ProviderConfig `json:"moonshot"`
+	OtherAPI  ProviderConfig `json:"otherapi"`
 }
 
 /** @brief 单个提供方的连接与模型配置。 */
 type ProviderConfig struct {
-	APIKey       string `json:"api_key"`
-	TextModel    string `json:"text_model"`
-	SummaryModel string `json:"summary_model"`
-	ImageModel   string `json:"image_model,omitempty"`
-	ImageSize    string `json:"image_size,omitempty"`
-	Endpoint     string `json:"endpoint"`
+	APIKey           string            `json:"api_key"`
+	TextModel        string            `json:"text_model"`
+	SummaryModel     string            `json:"summary_model"`
+	ImageModel       string            `json:"image_model,omitempty"`
+	ImageSize        string            `json:"image_size,omitempty"`
+	EmbeddingModel   string            `json:"embedding_model,omitempty"`
+	Endpoint         string            `json:"endpoint"`
+	APIType          string            `json:"api_type"`           // openai, anthropic, gemini, azure, moonshot, alibaba, otherapi
+	Temperature      float64           `json:"temperature"`        // 默认 1.0
+	MaxTokens        int               `json:"max_tokens"`         // 默认 0 (不限制)
+	TopP             float64           `json:"top_p"`              // 默认 1.0
+	PresencePenalty  float64           `json:"presence_penalty"`   // 默认 0
+	FrequencyPenalty float64           `json:"frequency_penalty"`  // 默认 0
+	CustomHeaders    map[string]string `json:"custom_headers,omitempty"`
+	Enabled          bool              `json:"enabled"`            // 默认 true
 }
 
 /** @brief 功能开关配置。 */
@@ -182,6 +203,14 @@ func (providers ProviderSettings) ByName(name string) (ProviderConfig, bool) {
 		return providers.DeepSeek, true
 	case "alibaba":
 		return providers.Alibaba, true
+	case "anthropic":
+		return providers.Anthropic, true
+	case "gemini":
+		return providers.Gemini, true
+	case "azure":
+		return providers.Azure, true
+	case "moonshot":
+		return providers.Moonshot, true
 	case "otherapi":
 		return providers.OtherAPI, true
 	default:
@@ -310,6 +339,10 @@ func BuildV2SettingsRows(settings AppSettings) V2SettingsRows {
 			providerRow("openai", settings.Providers.OpenAI),
 			providerRow("deepseek", settings.Providers.DeepSeek),
 			providerRow("alibaba", settings.Providers.Alibaba),
+			providerRow("anthropic", settings.Providers.Anthropic),
+			providerRow("gemini", settings.Providers.Gemini),
+			providerRow("azure", settings.Providers.Azure),
+			providerRow("moonshot", settings.Providers.Moonshot),
 			providerRow("otherapi", settings.Providers.OtherAPI),
 		},
 		ServiceConfigs: []V2ServiceConfigRow{
@@ -369,15 +402,28 @@ func BuildV2SettingsRows(settings AppSettings) V2SettingsRows {
  * @return V2ProviderRow 可持久化的提供方行。
  */
 func providerRow(name string, provider ProviderConfig) V2ProviderRow {
+	headersJSON := ""
+	if len(provider.CustomHeaders) > 0 {
+		b, _ := json.Marshal(provider.CustomHeaders)
+		headersJSON = string(b)
+	}
 	return V2ProviderRow{
-		Name:         name,
-		APIKeyEnc:    provider.APIKey,
-		TextModel:    provider.TextModel,
-		SummaryModel: provider.SummaryModel,
-		ImageModel:   provider.ImageModel,
-		ImageSize:    provider.ImageSize,
-		Endpoint:     provider.Endpoint,
-		Enabled:      true,
+		Name:             name,
+		APIKeyEnc:        provider.APIKey,
+		TextModel:        provider.TextModel,
+		SummaryModel:     provider.SummaryModel,
+		ImageModel:       provider.ImageModel,
+		ImageSize:        provider.ImageSize,
+		EmbeddingModel:   provider.EmbeddingModel,
+		Endpoint:         provider.Endpoint,
+		APIType:          provider.APIType,
+		Temperature:      provider.Temperature,
+		MaxTokens:        provider.MaxTokens,
+		TopP:             provider.TopP,
+		PresencePenalty:  provider.PresencePenalty,
+		FrequencyPenalty: provider.FrequencyPenalty,
+		CustomHeaders:    headersJSON,
+		Enabled:          provider.Enabled,
 	}
 }
 
@@ -429,13 +475,26 @@ func buildV2ConfigListItemRows(settings AppSettings) []V2ConfigListItemRow {
 func AppSettingsFromV2Rows(defaults AppSettings, rows V2SettingsRows) AppSettings {
 	settings := defaults
 	for _, provider := range rows.Providers {
+		var headers map[string]string
+		if provider.CustomHeaders != "" {
+			_ = json.Unmarshal([]byte(provider.CustomHeaders), &headers)
+		}
 		config := ProviderConfig{
-			APIKey:       provider.APIKeyEnc,
-			TextModel:    provider.TextModel,
-			SummaryModel: provider.SummaryModel,
-			ImageModel:   provider.ImageModel,
-			ImageSize:    provider.ImageSize,
-			Endpoint:     provider.Endpoint,
+			APIKey:           provider.APIKeyEnc,
+			TextModel:        provider.TextModel,
+			SummaryModel:     provider.SummaryModel,
+			ImageModel:       provider.ImageModel,
+			ImageSize:        provider.ImageSize,
+			EmbeddingModel:   provider.EmbeddingModel,
+			Endpoint:         provider.Endpoint,
+			APIType:          provider.APIType,
+			Temperature:      provider.Temperature,
+			MaxTokens:        provider.MaxTokens,
+			TopP:             provider.TopP,
+			PresencePenalty:  provider.PresencePenalty,
+			FrequencyPenalty: provider.FrequencyPenalty,
+			CustomHeaders:    headers,
+			Enabled:          provider.Enabled,
 		}
 		switch provider.Name {
 		case "openai":
@@ -444,6 +503,14 @@ func AppSettingsFromV2Rows(defaults AppSettings, rows V2SettingsRows) AppSetting
 			settings.Providers.DeepSeek = config
 		case "alibaba":
 			settings.Providers.Alibaba = config
+		case "anthropic":
+			settings.Providers.Anthropic = config
+		case "gemini":
+			settings.Providers.Gemini = config
+		case "azure":
+			settings.Providers.Azure = config
+		case "moonshot":
+			settings.Providers.Moonshot = config
 		case "otherapi":
 			settings.Providers.OtherAPI = config
 		}
@@ -639,11 +706,19 @@ func fallbackAppSettings() AppSettings {
 				ImageModel:   "dall-e-3",
 				ImageSize:    "1024x1024",
 				Endpoint:     "https://api.openai.com/v1/chat/completions",
+				APIType:      "openai",
+				Temperature:  1.0,
+				TopP:         1.0,
+				Enabled:      true,
 			},
 			DeepSeek: ProviderConfig{
 				TextModel:    "deepseek-chat",
 				SummaryModel: "deepseek-chat",
 				Endpoint:     "https://api.deepseek.com/chat/completions",
+				APIType:      "openai",
+				Temperature:  1.0,
+				TopP:         1.0,
+				Enabled:      true,
 			},
 			Alibaba: ProviderConfig{
 				TextModel:    "deepseek-v3",
@@ -651,6 +726,54 @@ func fallbackAppSettings() AppSettings {
 				ImageModel:   "wanx2.1-t2i-turbo",
 				ImageSize:    "1024*768",
 				Endpoint:     "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+				APIType:      "openai",
+				Temperature:  1.0,
+				TopP:         1.0,
+				Enabled:      true,
+			},
+			Anthropic: ProviderConfig{
+				TextModel:    "claude-3-5-sonnet-20241022",
+				SummaryModel: "claude-3-haiku-20240307",
+				Endpoint:     "https://api.anthropic.com/v1/messages",
+				APIType:      "anthropic",
+				Temperature:  1.0,
+				TopP:         1.0,
+				MaxTokens:    4096,
+				Enabled:      true,
+			},
+			Gemini: ProviderConfig{
+				TextModel:    "gemini-2.0-flash",
+				SummaryModel: "gemini-2.0-flash-lite",
+				Endpoint:     "https://generativelanguage.googleapis.com/v1beta/models",
+				APIType:      "gemini",
+				Temperature:  1.0,
+				TopP:         1.0,
+				Enabled:      true,
+			},
+			Azure: ProviderConfig{
+				TextModel:    "gpt-4o",
+				SummaryModel: "gpt-4o-mini",
+				Endpoint:     "https://{your-resource}.openai.azure.com/openai/deployments/{your-deployment}/chat/completions?api-version=2024-02-01",
+				APIType:      "azure",
+				Temperature:  1.0,
+				TopP:         1.0,
+				Enabled:      true,
+			},
+			Moonshot: ProviderConfig{
+				TextModel:    "kimi-for-coding",
+				SummaryModel: "kimi-for-coding",
+				Endpoint:     "https://api.moonshot.cn/v1/chat/completions",
+				APIType:      "openai",
+				Temperature:  0.3,
+				TopP:         0.95,
+				MaxTokens:    8192,
+				Enabled:      true,
+			},
+			OtherAPI: ProviderConfig{
+				APIType:     "openai",
+				Temperature: 1.0,
+				TopP:        1.0,
+				Enabled:     true,
 			},
 		},
 		Text: TextSettings{
