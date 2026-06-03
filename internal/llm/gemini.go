@@ -35,9 +35,9 @@ func (p *geminiProvider) IsEmbeddingsSupported() bool {
 
 // geminiRequest is the request format for Gemini API.
 type geminiRequest struct {
-	Contents         []geminiContent      `json:"contents"`
-	SystemInstruction *geminiContent      `json:"systemInstruction,omitempty"`
-	GenerationConfig  geminiGenConfig     `json:"generationConfig,omitempty"`
+	Contents          []geminiContent `json:"contents"`
+	SystemInstruction *geminiContent  `json:"systemInstruction,omitempty"`
+	GenerationConfig  geminiGenConfig `json:"generationConfig,omitempty"`
 }
 
 type geminiContent struct {
@@ -48,17 +48,17 @@ type geminiPart struct {
 	Text string `json:"text"`
 }
 type geminiGenConfig struct {
-	Temperature      float64  `json:"temperature,omitempty"`
-	TopP             float64  `json:"topP,omitempty"`
-	MaxOutputTokens  int      `json:"maxOutputTokens,omitempty"`
-	StopSequences    []string `json:"stopSequences,omitempty"`
+	Temperature     float64  `json:"temperature,omitempty"`
+	TopP            float64  `json:"topP,omitempty"`
+	MaxOutputTokens int      `json:"maxOutputTokens,omitempty"`
+	StopSequences   []string `json:"stopSequences,omitempty"`
 }
 
 // geminiResponse is the response format for Gemini API.
 type geminiResponse struct {
 	Candidates []struct {
-		Content geminiContent `json:"content"`
-		FinishReason string `json:"finishReason"`
+		Content      geminiContent `json:"content"`
+		FinishReason string        `json:"finishReason"`
 	} `json:"candidates"`
 	UsageMetadata struct {
 		PromptTokenCount     int `json:"promptTokenCount"`
@@ -362,14 +362,73 @@ func (p *geminiProvider) Embeddings(ctx context.Context, req EmbeddingRequest) (
 }
 
 func (p *geminiProvider) Models(ctx context.Context) (*ModelsResponse, error) {
+	if p.config.APIKey == "" {
+		return nil, fmt.Errorf("API key not configured")
+	}
+
+	endpoint := strings.TrimRight(p.config.Endpoint, "/")
+	if idx := strings.Index(endpoint, "/models/"); idx >= 0 {
+		endpoint = endpoint[:idx+len("/models")]
+	} else if !strings.HasSuffix(endpoint, "/models") {
+		endpoint = endpoint + "/models"
+	}
+	endpoint = endpoint + "?key=" + url.QueryEscape(p.config.APIKey)
+
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range p.config.CustomHeaders {
+		httpReq.Header.Set(k, v)
+	}
+
+	resp, err := util.GlobalHTTPClient.Do(httpReq)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var listResp struct {
+		Models []struct {
+			Name        string   `json:"name"`
+			BaseModel   string   `json:"baseModelId"`
+			Methods     []string `json:"supportedGenerationMethods"`
+			DisplayName string   `json:"displayName"`
+		} `json:"models"`
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &listResp); err != nil {
+		return nil, err
+	}
+	if listResp.Error.Message != "" {
+		return &ModelsResponse{Error: &Error{Message: listResp.Error.Message}}, nil
+	}
+
+	models := make([]Model, 0, len(listResp.Models))
+	for _, item := range listResp.Models {
+		id := strings.TrimPrefix(item.Name, "models/")
+		if id == "" {
+			id = item.BaseModel
+		}
+		if id == "" {
+			continue
+		}
+		models = append(models, Model{ID: id, Object: "model", OwnedBy: "google"})
+	}
+
 	return &ModelsResponse{
 		Object: "list",
-		Data: []Model{
-			{ID: "gemini-2.0-flash", Object: "model", OwnedBy: "google"},
-			{ID: "gemini-2.0-flash-lite", Object: "model", OwnedBy: "google"},
-			{ID: "gemini-2.0-pro-exp-02-05", Object: "model", OwnedBy: "google"},
-			{ID: "gemini-1.5-pro", Object: "model", OwnedBy: "google"},
-			{ID: "gemini-1.5-flash", Object: "model", OwnedBy: "google"},
-		},
+		Data:   models,
 	}, nil
 }

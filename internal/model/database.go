@@ -118,6 +118,40 @@ type ConfigListItem struct {
 }
 
 /**
+ * @brief API Key 记录模型。
+ */
+type APIKey struct {
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	KeyHash     string    `json:"key_hash" gorm:"uniqueIndex;not null"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Role        string    `json:"role" gorm:"default:'user'"`
+	Enabled     bool      `json:"enabled" gorm:"default:1"`
+	QuotaDay    int       `json:"quota_day" gorm:"default:0"`
+	QuotaMonth  int       `json:"quota_month" gorm:"default:0"`
+	UsageDay    int       `json:"usage_day" gorm:"default:0"`
+	UsageMonth  int       `json:"usage_month" gorm:"default:0"`
+	AllowedIPs  string    `json:"allowed_ips" gorm:"type:json"`
+	LastUsedAt  time.Time `json:"last_used_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+/**
+ * @brief API Key 使用日志记录。
+ */
+type APIKeyUsage struct {
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	KeyHash   string    `json:"key_hash" gorm:"index"`
+	Endpoint  string    `json:"endpoint"`
+	IP        string    `json:"ip"`
+	Status    int       `json:"status"`
+	Latency   int       `json:"latency_ms"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+/**
  * @brief 数据库批量查询结果集合。
  */
 type DBList struct {
@@ -125,4 +159,5 @@ type DBList struct {
 	TaskList       []Task
 	SessionList    []Session
 	AppSettingList []AppSetting
+	APIKeyList     []APIKey
 }

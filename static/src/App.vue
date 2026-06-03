@@ -13,6 +13,7 @@ const sidebarStatus = ref(false);
       '功能设置',
       '安全设置',
       '工作台',
+      'API Key 管理',
   ])
   const login = inject("login");
   const router = useRouter();
@@ -45,7 +46,7 @@ const sidebarStatus = ref(false);
 </script>
 
 <template>
-  <mdui-layout full-height>
+  <mdui-layout class="dashboard-layout" full-height>
     <Header></Header>
     <Sidebar v-if="login"></Sidebar>
 <!--    <Task v-if="tab==0 && login"></Task>-->

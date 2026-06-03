@@ -8,3 +8,4 @@
 *.db
 urlAPI
 /AGENT
+node_modules/

@@ -10,6 +10,7 @@ import (
 	"urlAPI/internal/database"
 	"urlAPI/internal/llm"
 	"urlAPI/internal/model"
+	"urlAPI/internal/server/middleware"
 	"urlAPI/util"
 
 	"github.com/gin-gonic/gin"
@@ -65,6 +66,11 @@ func ChatCompletionHandler(c *gin.Context) {
 		API:    providerName,
 		Model:  req.Model,
 		Status: "running",
+	}
+
+	// Record API Key usage if authenticated
+	if key, ok := middleware.GetAPIKey(c); ok {
+		database.APIKeyStore.IncrementUsage(key.KeyHash)
 	}
 
 	ctx := context.Background()

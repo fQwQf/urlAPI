@@ -39,10 +39,23 @@ func NewRouter() *gin.Engine {
 	r.GET("/download", middleware.GeneralSecurityMiddleware("download"), middleware.DownloadSecurityMiddleware(), handles.DownloadHandler)
 	r.POST("/session", handles.SessionHandler)
 
-	// OpenAI-compatible API v1
-	r.POST("/v1/chat/completions", handles.ChatCompletionHandler)
-	r.POST("/v1/embeddings", handles.EmbeddingsHandler)
-	r.GET("/v1/models", handles.ModelsHandler)
+	// OpenAI-compatible API v1 (requires API Key)
+	v1 := r.Group("/v1")
+	v1.Use(middleware.APIKeyAuthMiddleware(middleware.AuthConfig{Mode: middleware.AuthModeRequired}))
+	{
+		v1.POST("/chat/completions", handles.ChatCompletionHandler)
+		v1.POST("/embeddings", handles.EmbeddingsHandler)
+		v1.GET("/models", handles.ModelsHandler)
+	}
+
+	// API Key management (requires admin session)
+	admin := r.Group("/admin/apikeys")
+	{
+		admin.GET("", handles.ListAPIKeysHandler)
+		admin.POST("", handles.CreateAPIKeyHandler)
+		admin.DELETE("/:id", handles.DeleteAPIKeyHandler)
+		admin.PATCH("/:id", handles.UpdateAPIKeyHandler)
+	}
 
 	r.NoRoute(handles.StaticHandler)
 	return r

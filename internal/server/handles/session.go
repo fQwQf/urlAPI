@@ -17,7 +17,7 @@ import (
 func SessionHandler(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	var request op.Session
-	if err := c.ShouldBind(&request); err != nil { // auth Error
+	if err := c.ShouldBindJSON(&request); err != nil {
 		util.ErrorPrinter(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

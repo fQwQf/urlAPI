@@ -20,12 +20,8 @@ html, body, #app  {
   -moz-osx-font-smoothing: grayscale;
 }
 
-mdui-top-app-bar, mdui-navigation-drawer {
-    box-shadow: 0px 0px 10px #000000;
-}
-
-p, h1, mdui-button, mdui-checkbox, mdui-radio, mdui-text-field {
-    margin: 0.5rem
+p, h1, mdui-checkbox, mdui-radio, mdui-text-field {
+    margin: 0.5rem;
 }
 
 .list {
@@ -36,10 +32,6 @@ p, h1, mdui-button, mdui-checkbox, mdui-radio, mdui-text-field {
 
 mdui-card  {
     padding: 0.5rem;
-}
-
-mdui-layout-main {
-    padding-top: 4rem;
 }
 
 mdui-button {
@@ -73,7 +65,25 @@ mdui-card, mdui-radio-group {
     }
 }
 
-mdui-layout-main, .filter {
+.filter {
     display: flex;
     flex-flow: row wrap;
+}
+
+mdui-layout-main {
+    background: rgb(var(--mdui-color-surface));
+    box-sizing: border-box;
+}
+
+.dashboard-layout {
+    box-sizing: border-box;
+    padding-top: 64px;
+}
+
+mdui-layout-main:not(.backend-page):not(.apikey-page) {
+    display: flex;
+    flex-flow: row wrap;
+    padding-right: 0.75rem;
+    padding-bottom: 0.75rem;
+    padding-left: 0.75rem;
 }

@@ -39,6 +39,16 @@ func HandleSession(request Session, authSession model.Session) (Session, error) 
 		err = fetchSettings(&response)
 	case "editSettings":
 		err = editSettings(&response)
+	case "fetchProviderModels":
+		err = fetchProviderModels(&response)
+	case "fetchAPIKeys":
+		err = fetchAPIKeys(&response)
+	case "createAPIKey":
+		err = createAPIKey(&response)
+	case "deleteAPIKey":
+		err = deleteAPIKey(&response)
+	case "updateAPIKey":
+		err = updateAPIKey(&response)
 	}
 	if err != nil {
 		return response, errors.WithStack(err)

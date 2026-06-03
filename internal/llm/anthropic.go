@@ -35,14 +35,14 @@ func (p *anthropicProvider) IsEmbeddingsSupported() bool {
 
 // anthropicRequest is the request format for Anthropic API.
 type anthropicRequest struct {
-	Model         string              `json:"model"`
-	Messages      []anthropicMessage  `json:"messages"`
-	System        string              `json:"system,omitempty"`
-	MaxTokens     int                 `json:"max_tokens"`
-	Temperature   float64             `json:"temperature,omitempty"`
-	TopP          float64             `json:"top_p,omitempty"`
-	Stream        bool                `json:"stream,omitempty"`
-	StopSequences []string            `json:"stop_sequences,omitempty"`
+	Model         string             `json:"model"`
+	Messages      []anthropicMessage `json:"messages"`
+	System        string             `json:"system,omitempty"`
+	MaxTokens     int                `json:"max_tokens"`
+	Temperature   float64            `json:"temperature,omitempty"`
+	TopP          float64            `json:"top_p,omitempty"`
+	Stream        bool               `json:"stream,omitempty"`
+	StopSequences []string           `json:"stop_sequences,omitempty"`
 }
 
 // anthropicMessage is a message in Anthropic format.
@@ -53,13 +53,13 @@ type anthropicMessage struct {
 
 // anthropicResponse is the response format for Anthropic API.
 type anthropicResponse struct {
-	ID           string `json:"id"`
-	Type         string `json:"type"`
-	Role         string `json:"role"`
+	ID           string             `json:"id"`
+	Type         string             `json:"type"`
+	Role         string             `json:"role"`
 	Content      []anthropicContent `json:"content"`
-	Model        string `json:"model"`
-	StopReason   string `json:"stop_reason"`
-	StopSequence string `json:"stop_sequence"`
+	Model        string             `json:"model"`
+	StopReason   string             `json:"stop_reason"`
+	StopSequence string             `json:"stop_sequence"`
 	Usage        struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
@@ -74,9 +74,9 @@ type anthropicContent struct {
 
 // anthropicStreamEvent is a stream event from Anthropic.
 type anthropicStreamEvent struct {
-	Type    string              `json:"type"`
-	Index   int                 `json:"index,omitempty"`
-	Delta   anthropicStreamDelta `json:"delta,omitempty"`
+	Type    string                 `json:"type"`
+	Index   int                    `json:"index,omitempty"`
+	Delta   anthropicStreamDelta   `json:"delta,omitempty"`
 	Message anthropicStreamMessage `json:"message,omitempty"`
 }
 
@@ -327,14 +327,70 @@ func (p *anthropicProvider) Embeddings(ctx context.Context, req EmbeddingRequest
 }
 
 func (p *anthropicProvider) Models(ctx context.Context) (*ModelsResponse, error) {
+	if p.config.APIKey == "" {
+		return nil, fmt.Errorf("API key not configured")
+	}
+
+	endpoint := strings.TrimRight(p.config.Endpoint, "/")
+	if strings.HasSuffix(endpoint, "/messages") {
+		endpoint = strings.TrimSuffix(endpoint, "/messages") + "/models"
+	} else if !strings.HasSuffix(endpoint, "/models") {
+		endpoint = endpoint + "/models"
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	httpReq.Header.Set("x-api-key", p.config.APIKey)
+	httpReq.Header.Set("anthropic-version", "2023-06-01")
+
+	for k, v := range p.config.CustomHeaders {
+		httpReq.Header.Set(k, v)
+	}
+
+	resp, err := util.GlobalHTTPClient.Do(httpReq)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var listResp struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+		Error struct {
+			Type    string `json:"type"`
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(body, &listResp); err != nil {
+		return nil, err
+	}
+	if listResp.Error.Message != "" {
+		return &ModelsResponse{Error: &Error{Message: listResp.Error.Message, Type: listResp.Error.Type}}, nil
+	}
+
+	models := make([]Model, 0, len(listResp.Data))
+	for _, item := range listResp.Data {
+		if strings.TrimSpace(item.ID) == "" {
+			continue
+		}
+		models = append(models, Model{ID: item.ID, Object: "model", OwnedBy: "anthropic"})
+	}
+
 	return &ModelsResponse{
 		Object: "list",
-		Data: []Model{
-			{ID: "claude-3-5-sonnet-20241022", Object: "model", OwnedBy: "anthropic"},
-			{ID: "claude-3-5-haiku-20241022", Object: "model", OwnedBy: "anthropic"},
-			{ID: "claude-3-opus-20240229", Object: "model", OwnedBy: "anthropic"},
-			{ID: "claude-3-sonnet-20240229", Object: "model", OwnedBy: "anthropic"},
-			{ID: "claude-3-haiku-20240307", Object: "model", OwnedBy: "anthropic"},
-		},
+		Data:   models,
 	}, nil
 }

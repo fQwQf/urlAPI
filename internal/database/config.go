@@ -23,4 +23,6 @@ type Provider = model.Provider
 type ServiceConfig = model.ServiceConfig
 type Prompt = model.Prompt
 type ConfigListItem = model.ConfigListItem
+type APIKey = model.APIKey
+type APIKeyUsage = model.APIKeyUsage
 type DBList = model.DBList

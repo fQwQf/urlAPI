@@ -13,6 +13,7 @@ const routes = [
     { path: "/dash/security", component: () => import('@/pages/Security.vue') },
     { path: "/dash/backend", component: () => import('@/pages/Backend.vue') },
     { path: "/dash/workshop", component: () => import('@/pages/Workshop.vue') },
+    { path: "/dash/apikeys", component: () => import('@/pages/APIKeys.vue') },
     {path:"/dash/login",component:Login},
 ]
 

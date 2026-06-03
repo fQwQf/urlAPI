@@ -46,6 +46,8 @@ func migration() {
 	localDB.db.AutoMigrate(&Task{})
 	localDB.db.AutoMigrate(&Session{})
 	localDB.db.AutoMigrate(&Repo{})
+	localDB.db.AutoMigrate(&APIKey{})
+	localDB.db.AutoMigrate(&APIKeyUsage{})
 }
 
 /**

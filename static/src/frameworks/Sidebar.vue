@@ -31,6 +31,8 @@
       @click="changeTab('/dash/security')">{{ pages[3] }}</mdui-list-item>
       <mdui-list-item icon="dashboard"
       @click="changeTab('/dash/workshop')">{{ pages[4] }}</mdui-list-item>
+      <mdui-list-item icon="vpn_key"
+      @click="changeTab('/dash/apikeys')">{{ pages[5] }}</mdui-list-item>
     </mdui-list>
   </mdui-navigation-drawer>
 </template>

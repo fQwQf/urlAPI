@@ -1,10 +1,14 @@
 package op
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
+	"sort"
 	"strings"
+	"time"
 	"urlAPI/internal/database"
+	"urlAPI/internal/llm"
 	"urlAPI/util"
 
 	"github.com/pkg/errors"
@@ -28,6 +32,11 @@ type providerSettingsDTO struct {
 	FrequencyPenalty float64           `json:"frequency_penalty"`
 	CustomHeaders    map[string]string `json:"custom_headers,omitempty"`
 	Enabled          bool              `json:"enabled"`
+}
+
+/** @brief 提供方模型列表响应结构。 */
+type providerModelsDTO struct {
+	Models []string `json:"models"`
 }
 
 /** @brief 文本功能设置的接口传输结构。 */
@@ -137,6 +146,64 @@ func editSettings(info *Session) error {
 }
 
 /**
+ * @brief 读取指定提供方可用模型列表。
+ * @param info 会话请求与响应对象。
+ * @return error 提供方不存在或远端请求失败时返回错误。
+ */
+func fetchProviderModels(info *Session) error {
+	settings := database.SettingsStore.Get()
+	providerName := providerNameFromPart(info.SettingPart)
+	provider, ok := settings.Providers.ByName(providerName)
+	if !ok {
+		return errors.New("provider not found")
+	}
+	if !provider.Enabled {
+		return errors.New("provider is disabled")
+	}
+	if provider.APIKey == "" {
+		return errors.New("provider API key is not configured")
+	}
+
+	client, err := llm.NewProvider(provider)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	resp, err := client.Models(ctx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if resp.Error != nil {
+		return errors.New(resp.Error.Message)
+	}
+
+	models := make([]string, 0, len(resp.Data))
+	seen := make(map[string]struct{}, len(resp.Data))
+	for _, model := range resp.Data {
+		id := strings.TrimSpace(model.ID)
+		if id == "" {
+			continue
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		models = append(models, id)
+	}
+	sort.Strings(models)
+
+	encoded, err := json.Marshal(providerModelsDTO{Models: models})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	info.SettingBody = encoded
+	return nil
+}
+
+/**
  * @brief 根据分区名称构造设置响应体。
  * @param part 设置分区标识。
  * @param settings 当前完整应用设置。
@@ -219,6 +286,19 @@ func settingsBody(part string, settings util.AppSettings) (any, error) {
 	default:
 		return nil, errors.New("Setting part not found")
 	}
+}
+
+/**
+ * @brief 从设置分区名提取提供方名称。
+ * @param part 设置分区标识。
+ * @return string 提供方名称。
+ */
+func providerNameFromPart(part string) string {
+	part = strings.TrimSpace(part)
+	if strings.HasPrefix(part, "provider.") {
+		return strings.TrimPrefix(part, "provider.")
+	}
+	return part
 }
 
 /**
