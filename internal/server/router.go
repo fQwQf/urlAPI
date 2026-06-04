@@ -21,7 +21,7 @@ func NewRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
-	config.AllowHeaders = []string{"Content-Type", "Authorization"}
+	config.AllowHeaders = []string{"Content-Type", "Authorization", "X-API-Key", "X-Provider"}
 	config.AllowMethods = []string{"GET", "POST"}
 
 	r := gin.New()

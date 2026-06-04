@@ -27,7 +27,7 @@ const providers = [
     vendor: "DeepSeek",
     description: "DeepSeek V3/R1 等 OpenAI 兼容接口。",
     defaultEndpoint: "https://api.deepseek.com/chat/completions",
-    apiType: "deepseek",
+    apiType: "openai",
     defaultTextModel: "deepseek-chat",
     defaultSummaryModel: "deepseek-chat",
     embedding: false,
@@ -39,7 +39,7 @@ const providers = [
     vendor: "Alibaba Cloud",
     description: "DashScope 兼容模式和通义万相图像接口配置。",
     defaultEndpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    apiType: "alibaba",
+    apiType: "openai",
     defaultTextModel: "qwen-plus",
     defaultSummaryModel: "qwen-turbo",
     defaultImageModel: "wanx2.1-t2i-turbo",
@@ -93,7 +93,7 @@ const providers = [
     vendor: "Moonshot AI",
     description: "Kimi / Moonshot OpenAI 兼容接口。",
     defaultEndpoint: "https://api.moonshot.cn/v1/chat/completions",
-    apiType: "moonshot",
+    apiType: "openai",
     defaultTextModel: "kimi-latest",
     defaultSummaryModel: "kimi-latest",
     embedding: false,
@@ -105,7 +105,7 @@ const providers = [
     id: "otherapi",
     name: "自定义兼容接口",
     vendor: "Custom",
-    description: "任意 OpenAI 兼容网关、代理或私有部署。",
+    description: "任意 OpenAI 兼容网关、代理或私有部署。请求时请求头请设置 X-Provider: otherapi",
     defaultEndpoint: "",
     apiType: "openai",
     defaultTextModel: "",
@@ -129,7 +129,7 @@ onMounted(() => {
       <header class="page-header">
         <div>
           <h1>模型接口</h1>
-          <p>配置主流大模型供应商、默认模型和生成参数。模型列表可从远端同步，也可以直接手动填写。</p>
+          <p>配置大模型提供方的鉴权、地址和请求协议。默认模型仅在请求未传 model 时兜底，模型列表可从远端同步。</p>
         </div>
         <div class="summary-strip">
           <span>{{ providers.length }} 个提供方</span>

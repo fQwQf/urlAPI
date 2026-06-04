@@ -27,6 +27,7 @@ func init() {
 			Timeout:   30 * time.Second,
 			KeepAlive: 60 * time.Second,
 		}).DialContext,
+		ForceAttemptHTTP2:     true,
 		MaxIdleConns:          100,
 		MaxIdleConnsPerHost:   20,
 		IdleConnTimeout:       90 * time.Second,

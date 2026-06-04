@@ -14,6 +14,16 @@ const createdKey = ref("");
 const showResult = ref(false);
 const query = ref("");
 const statusFilter = ref("all");
+const chatExample = `curl -X POST http://localhost:2233/v1/chat/completions \\
+  -H "Authorization: Bearer sk-替换为刚创建的Key" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Provider: openai" \\
+  -d '{
+    "model": "gpt-5.5",
+    "messages": [
+      {"role": "user", "content": "写一句欢迎语"}
+    ]
+  }'`;
 
 const form = reactive({
   name: "",
@@ -311,6 +321,10 @@ function usagePercent(usage, quota) {
 function copyKey() {
   navigator.clipboard.writeText(createdKey.value).then(() => Notification("已复制到剪贴板"));
 }
+
+function copyExample() {
+  navigator.clipboard.writeText(chatExample).then(() => Notification("示例已复制到剪贴板"));
+}
 </script>
 
 <template>
@@ -340,6 +354,37 @@ function copyKey() {
         <div class="metric-card">
           <span>有配额</span>
           <strong>{{ stats.limited }}</strong>
+        </div>
+      </section>
+
+      <section class="usage-panel">
+        <div class="usage-copy">
+          <div class="section-title">
+            <mdui-icon name="terminal"></mdui-icon>
+            <h2>使用说明</h2>
+          </div>
+          <p>创建后的 Key 用于访问 OpenAI 兼容接口，推荐放在 Authorization: Bearer sk-... Header 中。请求体里的 model 优先生效，提供方默认模型只在未传 model 时兜底。</p>
+          <div class="usage-grid">
+            <div>
+              <span>对话接口</span>
+              <strong>POST /v1/chat/completions</strong>
+            </div>
+            <div>
+              <span>模型列表</span>
+              <strong>GET /v1/models?provider=openai</strong>
+            </div>
+            <div>
+              <span>指定提供方</span>
+              <strong>X-Provider: openai</strong>
+            </div>
+          </div>
+        </div>
+        <div class="example-box">
+          <div class="example-head">
+            <span>请求示例</span>
+            <mdui-button class="inline-button" variant="text" icon="content_copy" @click="copyExample">复制</mdui-button>
+          </div>
+          <pre><code>{{ chatExample }}</code></pre>
         </div>
       </section>
 
@@ -488,7 +533,8 @@ function copyKey() {
 
 .page-header,
 .workspace,
-.metric-grid {
+.metric-grid,
+.usage-panel {
   margin-left: auto;
   margin-right: auto;
   max-width: 1280px;
@@ -549,6 +595,87 @@ h1 {
   display: block;
   font-size: 1.6rem;
   margin-top: 0.25rem;
+}
+
+.usage-panel {
+  background: #fff;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 0.85fr) minmax(20rem, 1.15fr);
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.usage-copy p {
+  color: #5f6368;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 0.9rem;
+}
+
+.usage-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.usage-grid div {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.7rem 0.75rem;
+}
+
+.usage-grid span {
+  color: #6b7280;
+  display: block;
+  font-size: 0.78rem;
+  margin-bottom: 0.2rem;
+}
+
+.usage-grid strong {
+  color: #202124;
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.84rem;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.example-box {
+  background: #111827;
+  border-radius: 8px;
+  color: #e5e7eb;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.example-head {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+}
+
+.example-head span {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.example-box pre {
+  margin: 0;
+  overflow: auto;
+  padding: 0.85rem;
+}
+
+.example-box code {
+  color: #e5e7eb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre;
 }
 
 .workspace {
@@ -816,6 +943,10 @@ h1 {
 
 @media (max-width: 1024px) {
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-panel {
     grid-template-columns: 1fr;
   }
 }

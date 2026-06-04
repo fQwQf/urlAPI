@@ -17,7 +17,7 @@ func NewProvider(config util.ProviderConfig) (Provider, error) {
 	}
 
 	switch apiType {
-	case "openai", "azure", "moonshot", "deepseek", "alibaba":
+	case "openai", "azure", "deepseek", "alibaba", "moonshot":
 		return newOpenAICompatibleProvider(config, apiType), nil
 	case "anthropic":
 		return newAnthropicProvider(config), nil

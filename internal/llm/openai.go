@@ -56,7 +56,9 @@ func (p *openAICompatibleProvider) ChatCompletion(ctx context.Context, req ChatC
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+p.config.APIKey)
+	httpReq.Header.Set("User-Agent", "urlAPI/1.0")
 
 	for k, v := range p.config.CustomHeaders {
 		httpReq.Header.Set(k, v)
@@ -111,10 +113,11 @@ func (p *openAICompatibleProvider) ChatCompletionStream(ctx context.Context, req
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+p.config.APIKey)
 	httpReq.Header.Set("Accept", "text/event-stream")
+	httpReq.Header.Set("Authorization", "Bearer "+p.config.APIKey)
 	httpReq.Header.Set("Cache-Control", "no-cache")
 	httpReq.Header.Set("Connection", "keep-alive")
+	httpReq.Header.Set("User-Agent", "urlAPI/1.0")
 
 	for k, v := range p.config.CustomHeaders {
 		httpReq.Header.Set(k, v)
@@ -182,7 +185,9 @@ func (p *openAICompatibleProvider) Embeddings(ctx context.Context, req Embedding
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+p.config.APIKey)
+	httpReq.Header.Set("User-Agent", "urlAPI/1.0")
 
 	for k, v := range p.config.CustomHeaders {
 		httpReq.Header.Set(k, v)
@@ -223,6 +228,8 @@ func (p *openAICompatibleProvider) Models(ctx context.Context) (*ModelsResponse,
 	}
 
 	httpReq.Header.Set("Authorization", "Bearer "+p.config.APIKey)
+	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Set("User-Agent", "urlAPI/1.0")
 
 	for k, v := range p.config.CustomHeaders {
 		httpReq.Header.Set(k, v)

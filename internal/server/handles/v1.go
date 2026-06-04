@@ -25,11 +25,6 @@ func ChatCompletionHandler(c *gin.Context) {
 		return
 	}
 
-	if req.Model == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "model is required"})
-		return
-	}
-
 	providerName := c.GetHeader("X-Provider")
 	if providerName == "" {
 		settings := database.SettingsStore.Get()
@@ -49,6 +44,10 @@ func ChatCompletionHandler(c *gin.Context) {
 
 	if req.Model == "" && providerConfig.TextModel != "" {
 		req.Model = providerConfig.TextModel
+	}
+	if req.Model == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "model is required"})
+		return
 	}
 
 	client, err := llm.NewProvider(providerConfig)

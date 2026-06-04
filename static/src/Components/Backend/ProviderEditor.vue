@@ -23,6 +23,13 @@ const modelError = ref("");
 const fetchedModels = ref([]);
 const customHeaderText = ref("");
 
+const apiTypeOptions = [
+  { value: "openai", label: "OpenAI 兼容" },
+  { value: "anthropic", label: "Anthropic Messages" },
+  { value: "gemini", label: "Google Gemini" },
+  { value: "azure", label: "Azure OpenAI" },
+];
+
 const form = reactive({
   api_key: "",
   endpoint: "",
@@ -53,14 +60,10 @@ const modelOptions = computed(() => {
     ...(props.provider.modelHints || []),
     form.text_model,
     form.summary_model,
-    form.image_model,
-    form.embedding_model,
   ];
   return [...new Set(pool.map((item) => String(item || "").trim()).filter(Boolean))];
 });
 
-const supportsImage = computed(() => props.provider.image === true);
-const supportsEmbedding = computed(() => props.provider.embedding !== false);
 const canFetchModels = computed(() => props.provider.canFetchModels !== false);
 
 onMounted(() => {
@@ -72,13 +75,15 @@ async function loadSettings() {
   try {
     const data = await Setting("fetchSettings", props.provider.id);
     if (!data) return;
+    const textModel = data.text_model || data.summary_model || props.provider.defaultTextModel || "";
+    const apiType = normalizeAPIType(data.api_type || props.provider.apiType || "openai");
     settings.value = data;
     Object.assign(form, {
       api_key: "",
       endpoint: data.endpoint || props.provider.defaultEndpoint || "",
-      api_type: data.api_type || props.provider.apiType || props.provider.id,
-      text_model: data.text_model || props.provider.defaultTextModel || "",
-      summary_model: data.summary_model || props.provider.defaultSummaryModel || data.text_model || "",
+      api_type: apiType,
+      text_model: textModel,
+      summary_model: textModel,
       image_model: data.image_model || props.provider.defaultImageModel || "",
       image_size: data.image_size || props.provider.defaultImageSize || "",
       embedding_model: data.embedding_model || props.provider.defaultEmbeddingModel || "",
@@ -102,6 +107,7 @@ async function saveSettings() {
     if (headers === null) return;
     const payload = {
       ...form,
+      summary_model: form.text_model,
       temperature: Number(form.temperature),
       top_p: Number(form.top_p),
       max_tokens: Number(form.max_tokens || 0),
@@ -137,7 +143,7 @@ async function fetchModels() {
     }
     fetchedModels.value = resp?.setting_body?.models || resp?.models || [];
     if (fetchedModels.value.length === 0) {
-      modelError.value = "远端没有返回模型列表，可以继续手动填写模型 ID";
+      modelError.value = "远端没有返回模型列表，请检查 API Key、地址和接口类型";
     }
   } catch (err) {
     modelError.value = err.message;
@@ -147,8 +153,9 @@ async function fetchModels() {
   }
 }
 
-function setModel(field, value) {
-  form[field] = value;
+function setModel(value) {
+  form.text_model = value;
+  form.summary_model = value;
 }
 
 function applyPreset(preset) {
@@ -161,6 +168,10 @@ function applyPreset(preset) {
 function numberOr(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeAPIType(value) {
+  return apiTypeOptions.some((option) => option.value === value) ? value : "openai";
 }
 
 function formatHeaders(headers) {
@@ -209,7 +220,7 @@ function parseHeaders(text) {
           <mdui-icon name="key"></mdui-icon>
           <div>
             <h3>连接</h3>
-            <p>{{ settings?.api_key_set ? "已保存 API Key，留空不会覆盖" : "尚未保存 API Key" }}</p>
+            <p>{{ settings?.api_key_set ? "已保存 API Key，留空不会覆盖" : "尚未保存 API Key" }}；API 类型表示请求协议</p>
           </div>
         </div>
         <mdui-text-field class="field" variant="outlined" label="API Key" type="password" toggle-password
@@ -217,8 +228,12 @@ function parseHeaders(text) {
           :value="form.api_key" @input="form.api_key = $event.target.value"></mdui-text-field>
         <mdui-text-field class="field" variant="outlined" label="API 地址" :value="form.endpoint"
           @input="form.endpoint = $event.target.value"></mdui-text-field>
-        <mdui-text-field class="field" variant="outlined" label="API 类型" :value="form.api_type"
-          @input="form.api_type = $event.target.value"></mdui-text-field>
+        <mdui-select class="field" variant="outlined" label="API 类型" :value="form.api_type"
+          @change="form.api_type = $event.target.value">
+          <mdui-menu-item v-for="option in apiTypeOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </mdui-menu-item>
+        </mdui-select>
         <p v-if="provider.note" class="note">{{ provider.note }}</p>
       </section>
 
@@ -227,29 +242,24 @@ function parseHeaders(text) {
           <mdui-icon name="hub"></mdui-icon>
           <div>
             <h3>模型</h3>
-            <p>从远端拉取后点选，或直接输入任意模型 ID</p>
+            <p>请求体中的 model 优先生效；这里的值仅作为请求未指定 model 时的兜底</p>
           </div>
           <mdui-button class="inline-button" variant="tonal" icon="sync" :loading="modelLoading"
             :disabled="!canFetchModels" @click="fetchModels">拉取模型</mdui-button>
         </div>
         <p v-if="modelError" class="note warning">{{ modelError }}</p>
         <div class="model-chips" v-if="modelOptions.length">
-          <mdui-chip v-for="model in modelOptions.slice(0, 18)" :key="model" @click="setModel('text_model', model)">
+          <mdui-chip v-for="model in modelOptions.slice(0, 18)" :key="model" :selected="model === form.text_model"
+            @click="setModel(model)">
             {{ model }}
           </mdui-chip>
         </div>
-        <div class="model-fields">
-          <mdui-text-field class="field" variant="outlined" label="文字生成模型" :value="form.text_model"
-            @input="form.text_model = $event.target.value"></mdui-text-field>
-          <mdui-text-field class="field" variant="outlined" label="总结模型" :value="form.summary_model"
-            @input="form.summary_model = $event.target.value"></mdui-text-field>
-          <mdui-text-field v-if="supportsImage" class="field" variant="outlined" label="图片模型" :value="form.image_model"
-            @input="form.image_model = $event.target.value"></mdui-text-field>
-          <mdui-text-field v-if="supportsImage" class="field" variant="outlined" label="图片尺寸" :value="form.image_size"
-            @input="form.image_size = $event.target.value"></mdui-text-field>
-          <mdui-text-field v-if="supportsEmbedding" class="field" variant="outlined" label="Embedding 模型"
-            :value="form.embedding_model" @input="form.embedding_model = $event.target.value"></mdui-text-field>
-        </div>
+        <mdui-select v-if="modelOptions.length" class="field" variant="outlined" label="默认模型（可选）"
+          :value="form.text_model" @change="setModel($event.target.value)">
+          <mdui-menu-item v-for="model in modelOptions" :key="model" :value="model">{{ model }}</mdui-menu-item>
+        </mdui-select>
+        <mdui-text-field v-else class="field" variant="outlined" label="默认模型（可选）"
+          :value="form.text_model" @input="setModel($event.target.value)"></mdui-text-field>
       </section>
 
       <section class="panel parameters-panel">
@@ -257,7 +267,7 @@ function parseHeaders(text) {
           <mdui-icon name="tune"></mdui-icon>
           <div>
             <h3>参数控制</h3>
-            <p>默认参数会应用到文字生成和总结请求</p>
+            <p>仅用于站内生成任务；OpenAI 兼容 API 请求中的同名参数优先生效</p>
           </div>
         </div>
         <div class="preset-row">
@@ -447,7 +457,6 @@ h2 {
   overflow: auto;
 }
 
-.model-fields,
 .numeric-grid {
   display: grid;
   gap: 0.75rem;
@@ -505,7 +514,6 @@ h2 {
   }
 
   .editor-grid,
-  .model-fields,
   .numeric-grid {
     grid-template-columns: 1fr;
   }
